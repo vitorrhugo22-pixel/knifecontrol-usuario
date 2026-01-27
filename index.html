@@ -219,9 +219,7 @@
     // Use o formato GViz JSON (Visualization API):
     //   https://docs.google.com/spreadsheets/d/SEU_SHEET_ID/gviz/tq?tqx=out:json&sheet=NomeDaAba
     // A aba deve ser a que contém as respostas do Google Forms.
-    
-   const FORMS_RESP_GVIS_URL = 'https://docs.google.com/spreadsheets/d/1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE/gviz/tq?tqx=out:json&gid=324654921';
-
+    const FORMS_RESP_GVIS_URL = 'https://docs.google.com/spreadsheets/d/1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE/gviz/tq?tqx=out:json&gid=324654921'; // TODO: Substituir
 
     // Funcionários e objetos locais
     const EMPLOYEE_JSON_URL = '/planilha.json'; // sua base (funcionarios + setores + objetos + senhas)
@@ -609,5 +607,71 @@
     }
     window.addEventListener('DOMContentLoaded', boot);
   </script>
+
+<script>
+// --- Overrides (scanner + identificação manual + parser QR) ---
+function ensureSecure(){
+  const isSecure = (location.protocol === 'https:' || location.hostname === 'localhost');
+  if (!isSecure) { showToast('Para abrir a câmera, use HTTPS (ou localhost).', 'error'); }
+  return isSecure;
+}
+async function startScanner(context){
+  if(!ensureSecure()) return;
+  const containerId = (context==='retirada'?'scannerRetirada':'scannerInventario');
+  const container = document.getElementById(containerId);
+  try{
+    container.innerHTML = '<div id="qr-reader-'+context+'" style="width: 100%; height: 100%"></div>';
+    container.classList.remove('scanner-inactive');
+    const constraints = { facingMode: { ideal: 'environment' } };
+    const scanner = new Html5Qrcode('qr-reader-'+context);
+    qrScanners[context] = scanner;
+    await scanner.start(
+      constraints,
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      (decodedText) => { processQRCode(decodedText, context); stopScanner(context); },
+      (error) => { /* decode errors expected; ignore */ }
+    );
+    scannerActive[context] = true;
+    updateScanStatus(context, '📷 Câmera ativa — Aponte para o QR Code', 'loading');
+  }catch(err){
+    console.error('Erro ao iniciar scanner:', err);
+    updateScanStatus(context, '❌ Erro ao acessar câmera (verifique permissões/HTTPS).', 'error');
+    resetScanner(containerId, context);
+  }
+}
+async function identificarManual(context){
+  const inputId = context==='retirada' ? 'codigoManualRetirada' : 'codigoManualInventario';
+  const codigo = (document.getElementById(inputId).value || '').trim();
+  if(!codigo){ showToast('Por favor, digite a matrícula','error'); return; }
+  const onlyDigits = codigo.replace(/\D+/g, '');
+  if(!onlyDigits){ showToast('A matrícula deve conter apenas números.','error'); return; }
+  const existe = FUNCIONARIOS.some(f => String(f.matricula) === String(onlyDigits));
+  if(!existe){ showToast('Matrícula não cadastrada.','error'); return; }
+  const nome = getNomeByMatricula(onlyDigits) || '';
+  currentFuncionario = { id: onlyDigits, nome, setor: currentSetor, dataLeitura: new Date() };
+  if(context==='retirada'){
+    showFuncionarioInfo();
+    const nomeEl = document.getElementById('nomeFuncionarioRetirada'); if(nome && nomeEl){ nomeEl.value = nome; }
+    loadObjetosDisponiveis();
+  } else {
+    showFuncionarioInfoInventario();
+    const nomeEl = document.getElementById('nomeFuncionarioInventario'); if(nome && nomeEl){ nomeEl.value = nome; }
+    montarInventario();
+  }
+  updateScanStatus(context,'✅ Funcionário identificado','active');
+  setTimeout(()=>{ const st=document.getElementById('scanStatus-'+context); if(st) st.classList.add('hidden'); },1800);
+}
+function parseCrachaData(raw){
+  const txt = String(raw || '').trim();
+  const justDigits = txt.replace(/\D+/g, '');
+  if (justDigits && /^\d+$/.test(justDigits)) { return { matricula: justDigits, nome: '' }; }
+  try{ const o = JSON.parse(txt); return { matricula: o.matricula ? String(o.matricula) : '', nome: o.nome || '' }; }catch(e){}
+  const r1 = txt.match(/^\s*(\d+)\s*[|;,	]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
+  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^
+]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
+  return { matricula:'', nome: txt };
+}
+</script>
+
 </body>
 </html>

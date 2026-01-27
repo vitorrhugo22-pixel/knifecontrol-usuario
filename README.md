@@ -1,1 +1,2 @@
-KnifeControl Usuario full package
+# KnifeControl — Final com GViz + patches + planilha.json real
+
