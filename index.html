@@ -6,7 +6,7 @@
   <title>KnifeControl Usuário — Fallback Google Forms (Sync)</title>
   <link rel="icon" type="image/png" href="https://pfst.cf2.poecdn.net/base/image/66a86ff2e9d405ae0301524bd658a3243a0dd6b3e9b05bb2cf53c4d11af08062?w=71&h=69" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
   <style>
     body { box-sizing: border-box; margin: 0; padding: 0; }
     .app-header { background: white; border-bottom: 2px solid #e5e7eb; padding: 8px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -21,18 +21,6 @@
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
   </style>
-
-<script>
-window.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    if (typeof window.Html5Qrcode !== 'function'){
-      var s=document.createElement('script'); s.id='fallbackHtml5Qrcode';
-      s.src='https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js'; s.async=true;
-      document.head.appendChild(s);
-    }
-  }, 500);
-});
-</script>
 </head>
 <body class="bg-gray-100">
 
@@ -269,6 +257,10 @@ window.addEventListener('DOMContentLoaded', function(){
     let FUNCIONARIOS = [];
     let OBJETOS = LOCAL_OBJETOS;
     let SETORES = LOCAL_SETORES;
+ let SENHAS_JSON = null;
+ let SETORES_ATIVOS = null;
+ const LAST_SYNC_KEY='KC_LAST_SYNC_ISO';
+
 
     // STATUS remoto (vindos da planilha-resposta do Forms) por setor/objeto
     // Estrutura: { [setor]: { [objeto]: 'Em Uso'|'Devolvido' } }
@@ -300,10 +292,10 @@ window.addEventListener('DOMContentLoaded', function(){
     async function loadEmployeesAndConfig(){
       try{
         const resp = await fetch(EMPLOYEE_JSON_URL, { cache:'no-store' });
-        if(resp.ok){ const j = await resp.json();
+        if(resp.ok){ const j = await resp.json(); SENHAS_JSON = (j.setoresSenha && typeof j.setoresSenha==='object') ? j.setoresSenha : null; SETORES_ATIVOS = Array.isArray(j.setoresAtivos) ? j.setoresAtivos : null;
           if(Array.isArray(j.funcionarios)) FUNCIONARIOS = j.funcionarios; else FUNCIONARIOS = LOCAL_FUNCIONARIOS;
           if(j.objetos && typeof j.objetos==='object') OBJETOS = j.objetos; else OBJETOS = LOCAL_OBJETOS;
-          if(Array.isArray(j.setores)) SETORES = j.setores; else SETORES = LOCAL_SETORES;
+          if(Array.isArray(j.setores)) SETORES = j.setores; else SETORES = LOCAL_SETORES; if(Array.isArray(SETORES_ATIVOS)) SETORES = SETORES.filter(s=> SETORES_ATIVOS.includes(s));
         } else { FUNCIONARIOS = LOCAL_FUNCIONARIOS; OBJETOS = LOCAL_OBJETOS; SETORES = LOCAL_SETORES; }
       }catch(e){ FUNCIONARIOS = LOCAL_FUNCIONARIOS; OBJETOS = LOCAL_OBJETOS; SETORES = LOCAL_SETORES; }
     }
@@ -363,7 +355,7 @@ window.addEventListener('DOMContentLoaded', function(){
           if(!REMOTE_STATUS[setor]) REMOTE_STATUS[setor] = {};
           REMOTE_STATUS[setor][objeto] = val; // {status, ts}
         });
-        setSyncStatus('Status sincronizado com a planilha do Forms');
+        localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString()); setSyncStatus('Status sincronizado com a planilha do Forms');
       }catch(e){ console.error(e); setSyncStatus('Erro ao ler GViz JSON do Forms', false); }
     }
 
@@ -381,9 +373,9 @@ window.addEventListener('DOMContentLoaded', function(){
 
     document.getElementById('loginForm').addEventListener('submit', (e)=>{
       e.preventDefault();
-      const setor=document.getElementById('setor').value; const senha=document.getElementById('senha').value;
+      const setor=document.getElementById('setor').value; const senha=document.getElementById('senha').value; if(Array.isArray(SETORES_ATIVOS) && !SETORES_ATIVOS.includes(setor)){ showToast('Setor indisponível','error'); return; }
       if(!setor||!senha){ showToast('Por favor, preencha todos os campos','error'); return; }
-      if(ENFORCE_LOCAL_PASSWORD){ if(!LOCAL_SENHAS[setor] || LOCAL_SENHAS[setor]!==senha){ showToast('Senha incorreta','error'); return; } }
+      if(ENFORCE_LOCAL_PASSWORD){ const m = SENHAS_JSON || LOCAL_SENHAS; if(!m[setor] || m[setor]!==senha){ showToast('Senha incorreta','error'); return; } }
       currentSetor=setor; document.getElementById('setorAtual').textContent='Setor: '+currentSetor;
       showScreen('mainMenu'); showToast('Login realizado com sucesso!','success');
       // Após login, sincroniza status remoto
@@ -434,17 +426,181 @@ window.addEventListener('DOMContentLoaded', function(){
     }
 
     function parseCrachaData(raw){
-  const txt = String(raw || '').trim();
-  const justDigits = txt.replace(/\D+/g, '');
-  if (justDigits && /^\d+$/.test(justDigits)) { return { matricula: justDigits, nome: '' }; }
-  try{ const o = JSON.parse(txt); return { matricula: o.matricula ? String(o.matricula) : '', nome: o.nome || '' }; }catch(e){}
-  const r1 = txt.match(/^\s*(\d+)\s*[|;,\t]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
-  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*?(?:nome)[:=]\s*([^\n]+)/i); if(r2) return { matricula:r2[1], nome:r2[2] };
-  return { matricula:'', nome: txt };
-}
+      // Tenta JSON: {"matricula":"123","nome":"Fulano"}
+      try{ const o=JSON.parse(raw); return { matricula: o.matricula? String(o.matricula):'', nome: o.nome||'' }; }catch(e){}
+      // 12345|FULANO  ou  12345;FULANO
+      const r1 = raw.match(/^\s*(\d+)\s*[|;,\t]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
+      // Matrícula:123; Nome: Fulano
+      const r2 = raw.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^\n]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
+      // só números => matrícula
+      if(/^\s*\d+\s*$/.test(raw)) return { matricula: raw.trim(), nome:'' };
+      // só texto => nome
+      return { matricula:'', nome: raw.trim() };
+    }
 
+    async function processQRCode(code, context){
+      const { matricula, nome } = parseCrachaData(String(code||''));
+      let mat = (matricula||'').trim();
+      let nm  = (nome||'').trim();
+      if(!mat && nm){ mat = getMatriculaByNome(nm); }
+      if(mat && !nm){ nm = getNomeByMatricula(mat); }
+      if(!mat){ showToast('Não foi possível identificar a matrícula a partir do QR.','error'); return; }
+      if(!FUNCIONARIOS.some(f=> String(f.matricula)===String(mat))){ showToast('Matrícula não cadastrada.','error'); return; }
 
-// =================== BOOT ===================
+      currentFuncionario={ id: mat, nome:nm||'', setor: currentSetor, dataLeitura: new Date() };
+      if(context==='retirada'){
+        showFuncionarioInfo();
+        const nomeEl = document.getElementById('nomeFuncionarioRetirada'); if(nm && nomeEl){ nomeEl.value = nm; }
+        loadObjetosDisponiveis();
+      }
+      if(context==='inventario'){
+        showFuncionarioInfoInventario();
+        const nomeEl = document.getElementById('nomeFuncionarioInventario'); if(nm && nomeEl){ nomeEl.value = nm; }
+        montarInventario();
+      }
+      updateScanStatus(context,'✅ Funcionário identificado','active'); setTimeout(()=>{ const st=document.getElementById('scanStatus-'+context); if(st) st.classList.add('hidden'); },1800);
+    }
+
+    async function identificarManual(context){
+      const inputId = context==='retirada' ? 'codigoManualRetirada' : 'codigoManualInventario';
+      const codigo = document.getElementById(inputId).value.trim(); if(!codigo){ showToast('Por favor, digite a matrícula','error'); return; }
+      // valida contra base
+      if(!FUNCIONARIOS.some(f=> String(f.matricula)===String(codigo))){ showToast('Matrícula não cadastrada.','error'); return; }
+      await processQRCode(codigo, context);
+    }
+
+    // =================== UI FUNCIONÁRIO ===================
+    function showFuncionarioInfo(){ const info=document.getElementById('funcionarioInfoRetirada'); const leitura=document.getElementById('leituraInfoRetirada'); const selection=document.getElementById('objetoSelectionRetirada'); info.classList.remove('hidden'); leitura.classList.remove('hidden'); selection.classList.remove('hidden'); info.innerHTML=`<div class=\"grid grid-cols-1 gap-2\"><div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div><label class=\"text-sm text-gray-700 mt-1\"><strong>👤 Nome:</strong></label><input id=\"nomeFuncionarioRetirada\" class=\"w-full px-3 py-2 border border-green-300 rounded-lg\" placeholder=\"(preenchido automaticamente, se cadastrado)\" /><div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div></div>`; const dataLeitura=currentFuncionario.dataLeitura||new Date(); leitura.innerHTML=`<div><strong>🕐 Leitura:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`; }
+    function showFuncionarioInfoInventario(){ const info=document.getElementById('funcionarioInfoInventario'); const leitura=document.getElementById('leituraInfoInventario'); info.classList.remove('hidden'); leitura.classList.remove('hidden'); info.innerHTML=`<div class=\"grid grid-cols-1 gap-2\"><div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div><label class=\"text-sm text-gray-700 mt-1\"><strong>👤 Nome:</strong></label><input id=\"nomeFuncionarioInventario\" class=\"w-full px-3 py-2 border border-green-300 rounded-lg\" placeholder=\"(preenchido automaticamente, se cadastrado)\" /><div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div></div>`; const dataLeitura=currentFuncionario.dataLeitura||new Date(); leitura.innerHTML=`<div><strong>🕐 Leitura:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`; }
+
+    // =================== OBJETOS (RETIRADA) ===================
+    function loadObjetosDisponiveis(){
+      const select=document.getElementById('objetoRetirada'); select.innerHTML='<option value=\"\">Selecione um objeto...</option>';
+      (OBJETOS[currentSetor]||[]).forEach(nome=>{ const o=document.createElement('option'); o.value=nome; o.textContent=nome; select.appendChild(o); });
+    }
+
+    function confirmarRetirada(){
+      const objSel=(document.getElementById('objetoRetirada').value||'').trim(); const objManual=(document.getElementById('objetoRetiradaManual').value||'').trim(); const objeto= objManual || objSel;
+      if(!objeto){ showToast('Selecione ou digite o objeto','error'); return; }
+      if(!currentFuncionario){ showToast('Identifique o funcionário primeiro','error'); return; }
+
+      const merged = getMergedStatus(currentSetor);
+      const rec = merged[objeto];
+      const st = typeof rec==='string'? rec : (rec?.status || 'Devolvido');
+      if(st==='Em Uso'){ showToast('Este objeto já está Em Uso','error'); return; }
+
+      const nome=(document.getElementById('nomeFuncionarioRetirada')?.value||'').trim();
+      showConfirm(`Confirma a retirada do objeto \"${objeto}\"?`, async ()=>{
+        try{
+          await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status:'Em Uso' });
+          setObjectStatusLocal(currentSetor, objeto, 'Em Uso');
+          showToast('Retirada registrada com sucesso!','success');
+          // Atualiza remoto em background (tolerante a atraso de propagação)
+          setTimeout(refreshRemoteStatus, 2000);
+          // Reset leve
+          currentFuncionario=null; document.getElementById('funcionarioInfoRetirada').classList.add('hidden'); document.getElementById('leituraInfoRetirada').classList.add('hidden'); document.getElementById('objetoSelectionRetirada').classList.add('hidden'); document.getElementById('codigoManualRetirada').value=''; document.getElementById('objetoRetiradaManual').value=''; resetScanner('scannerRetirada','retirada');
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== DEVOLUÇÃO (somente itens Em Uso) ===================
+    function montarListaDevolucao(){
+      const grid = document.getElementById('devolucaoLista'); const empty = document.getElementById('devolucaoEmpty');
+      grid.innerHTML='';
+      const merged = getMergedStatus(currentSetor);
+      const emUso = Object.entries(merged).filter(([obj, rec])=> (typeof rec==='string'? rec : (rec?.status||'Devolvido'))==='Em Uso').map(([obj])=>obj);
+      if(emUso.length===0){ empty.classList.remove('hidden'); return; } else { empty.classList.add('hidden'); }
+      emUso.forEach(nome=>{
+        const btn=document.createElement('button');
+        btn.className='px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border text-blue-700 font-semibold';
+        btn.textContent=nome;
+        btn.onclick=()=> confirmarDevolucaoObjeto(nome);
+        grid.appendChild(btn);
+      });
+    }
+
+    function confirmarDevolucaoObjeto(objeto){
+      showConfirm(`Confirmar devolução do objeto \"${objeto}\"?`, async ()=>{
+        try{
+          await postToForms({ objeto, matricula: '', funcionario: '', setor: currentSetor, status:'Devolvido' });
+          setObjectStatusLocal(currentSetor, objeto, 'Devolvido');
+          showToast('Devolução registrada com sucesso!','success');
+          setTimeout(refreshRemoteStatus, 2000);
+          montarListaDevolucao();
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== INVENTÁRIO (lista todos + bloqueio se Em Uso) ===================
+    function montarInventario(){
+      const container=document.getElementById('listaObjetosInventario'); const statusDiv=document.getElementById('statusObjetosInventario'); const actionsDiv=document.getElementById('inventarioActions'); const aviso=document.getElementById('inventarioAviso');
+      container.innerHTML='';
+      const lista=(OBJETOS[currentSetor]||[]);
+      statusDiv.classList.remove('hidden'); actionsDiv.classList.remove('hidden');
+      let existeEmUso=false;
+      const merged = getMergedStatus(currentSetor);
+      lista.forEach((nome)=>{
+        const rec = merged[nome];
+        const st = typeof rec==='string'? rec : (rec?.status||'Devolvido');
+        if(st==='Em Uso') existeEmUso=true;
+        const row=document.createElement('div'); row.className='flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+        row.innerHTML = `<div class=\"font-semibold text-gray-800\">${nome}</div>` +
+          `<div class=\"text-sm\">`+
+          (st==='Em Uso' ? `<span class='bg-red-100 text-red-700 px-3 py-1 rounded-full'>Em Uso</span>` : `<span class='bg-green-100 text-green-700 px-3 py-1 rounded-full'>Devolvido</span>`)
+          + `</div>`;
+        container.appendChild(row);
+      });
+      const btn = document.getElementById('btnFinalizarInventario');
+      if(existeEmUso){ btn.disabled=true; aviso.classList.remove('hidden'); } else { btn.disabled=false; aviso.classList.add('hidden'); }
+    }
+
+    async function finalizarInventario(){
+      if(!currentFuncionario){ showToast('Identifique o funcionário primeiro','error'); return; }
+      const nome=(document.getElementById('nomeFuncionarioInventario')?.value||'').trim();
+      const lista=(OBJETOS[currentSetor]||[]);
+      const merged = getMergedStatus(currentSetor);
+      const algumEmUso = Object.values(merged).some(rec=> (typeof rec==='string'? rec : (rec?.status||'Devolvido'))==='Em Uso');
+      if(algumEmUso){ showToast('Há objetos Em Uso. Inventário bloqueado.','error'); return; }
+      showConfirm('Confirmar finalização do inventário e envio ao Forms?', async ()=>{
+        try{
+          for(const objeto of lista){
+            const rec = merged[objeto];
+            const status = typeof rec==='string'? rec : (rec?.status||'Devolvido');
+            await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status });
+          }
+          showToast('Inventário enviado com sucesso!','success');
+          setTimeout(refreshRemoteStatus, 2000);
+          // Reset visual
+          currentFuncionario=null; document.getElementById('funcionarioInfoInventario').classList.add('hidden'); document.getElementById('leituraInfoInventario').classList.add('hidden'); document.getElementById('statusObjetosInventario').classList.add('hidden'); document.getElementById('inventarioActions').classList.add('hidden'); document.getElementById('codigoManualInventario').value=''; resetScanner('scannerInventario','inventario');
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== POST AO FORMS ===================
+    async function postToForms({ objeto, matricula, funcionario, setor, status }){
+      if(!GOOGLE_FORM_URL.includes('/formResponse')){ throw new Error('GOOGLE_FORM_URL inválida'); }
+      const fd=new FormData();
+      fd.append(FORMS_FIELDS.objeto, objeto||'');
+      fd.append(FORMS_FIELDS.matricula, matricula||'');
+      fd.append(FORMS_FIELDS.funcionario, funcionario||'');
+      fd.append(FORMS_FIELDS.setor, setor||'');
+      fd.append(FORMS_FIELDS.timestamp, new Date().toISOString());
+      if(status==='Em Uso')     fd.append(FORMS_FIELDS.emUso, CHECKBOX_LABELS.emUso);
+      if(status==='Devolvido')  fd.append(FORMS_FIELDS.devolvido, CHECKBOX_LABELS.devolvido);
+      await fetch(GOOGLE_FORM_URL, { method:'POST', mode:'no-cors', body: fd });
+    }
+
+    // =================== MODAL ===================
+    let confirmCallback=null;
+    function showConfirm(message, callback){ const modal=document.getElementById('confirmModal'); const msg=document.getElementById('confirmMessage'); const btn=document.getElementById('confirmButton'); msg.textContent=message; modal.classList.remove('hidden'); confirmCallback=callback; btn.onclick=function(){ modal.classList.add('hidden'); if(confirmCallback){ confirmCallback(); confirmCallback=null; } } }
+    function cancelConfirm(){ document.getElementById('confirmModal').classList.add('hidden'); confirmCallback=null; }
+
+    function voltarMenu(){ Object.keys(qrScanners).forEach(ctx=>{ if(scannerActive[ctx]){ stopScanner(ctx); } }); currentFuncionario=null; document.getElementById('codigoManualRetirada').value=''; document.getElementById('codigoManualInventario').value=''; document.getElementById('funcionarioInfoRetirada').classList.add('hidden'); document.getElementById('leituraInfoRetirada').classList.add('hidden'); document.getElementById('objetoSelectionRetirada').classList.add('hidden'); document.getElementById('funcionarioInfoInventario').classList.add('hidden'); document.getElementById('leituraInfoInventario').classList.add('hidden'); document.getElementById('statusObjetosInventario').classList.add('hidden'); document.getElementById('inventarioActions').classList.add('hidden'); showScreen('mainMenu'); }
+
+    // =================== BOOT ===================
     async function boot(){
       await loadEmployeesAndConfig();
       loadSetores();
@@ -465,11 +621,6 @@ function ensureSecure(){
 }
 async function startScanner(context){
   if(!ensureSecure()) return;
-  if (typeof window.Html5Qrcode !== "function") {
-    showToast("Leitor de QR não carregou. Recarregue a página (CTRL+F5).", "error");
-    console.error("Html5Qrcode não disponível. Verifique o script CDN.");
-    return;
-  }
   const containerId = (context==='retirada'?'scannerRetirada':'scannerInventario');
   const container = document.getElementById(containerId);
   try{
@@ -520,7 +671,8 @@ function parseCrachaData(raw){
   if (justDigits && /^\d+$/.test(justDigits)) { return { matricula: justDigits, nome: '' }; }
   try{ const o = JSON.parse(txt); return { matricula: o.matricula ? String(o.matricula) : '', nome: o.nome || '' }; }catch(e){}
   const r1 = txt.match(/^\s*(\d+)\s*[|;,	]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
-  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
+  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^
+]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
   return { matricula:'', nome: txt };
 }
 </script>

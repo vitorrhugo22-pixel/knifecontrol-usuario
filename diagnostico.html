@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Diagnóstico KnifeControl</title>
+<link rel="icon" href="data:," />
+<style>
+ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans',sans-serif; margin:16px;}
+ .card{border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:16px;}
+ .ok{color:#065f46;} .warn{color:#92400e;} .err{color:#991b1b;}
+ code, pre{background:#f9fafb; padding:2px 4px; border-radius:6px;}
+ .k{font-weight:600;}
+</style>
+</head>
+<body>
+<h1>🔧 Diagnóstico — KnifeControl</h1>
+<div class=card>
+  <div><span class=k>Host:</span> <code id=host></code></div>
+  <div><span class=k>Protocol:</span> <code id=proto></code> <span id=secure></span></div>
+  <div><span class=k>Data/Hora:</span> <code id=now></code></div>
+</div>
+
+<div class=card>
+  <h2>🎥 Câmera</h2>
+  <div id=camStatus>Verificando...</div>
+  <pre id=camInfo style="white-space:pre-wrap"></pre>
+</div>
+
+<div class=card>
+  <h2>📄 planilha.json</h2>
+  <div id=planStatus>Verificando...</div>
+  <pre id=planInfo style="white-space:pre-wrap"></pre>
+</div>
+
+<div class=card>
+  <h2>📊 GViz (Google Sheets)</h2>
+  <div>URL: <code id=gvizUrl'></code></div>
+  <div id=gvizStatus>Verificando...</div>
+  <div>Última sincronização (localStorage): <code id=lastSync></code></div>
+  <pre id=gvizInfo style="white-space:pre-wrap"></pre>
+</div>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  $('host').textContent = location.hostname;
+  $('proto').textContent = location.protocol;
+  const secure = (location.protocol==='https:'||location.hostname==='localhost');
+  $('secure').innerHTML = secure? ' <span class=ok>✅ contexto seguro</span>' : ' <span class=err>❌ não seguro</span>';
+  $('now').textContent = new Date().toLocaleString('pt-BR');
+
+  const GVIZ = "https://docs.google.com/spreadsheets/d/1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE/gviz/tq?tqx=out:json&gid=324654921";
+  var urlSpan = document.createElement('span'); urlSpan.textContent = GVIZ; document.getElementById('gvizUrl'').replaceWith(urlSpan);
+
+  async function checkCamera(){
+    try{
+      const perm = (navigator.permissions && navigator.permissions.query)? await navigator.permissions.query({name:'camera'}).catch(()=>null) : null;
+      const devices = (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices)? await navigator.mediaDevices.enumerateDevices() : [];
+      const cams = devices.filter(d=>d.kind==='videoinput');
+      let msg = [];
+      if(perm){ msg.push('permissions.query(name='camera'): ' + perm.state); }
+      msg.push('videoinput encontrados: ' + cams.length);
+      $('camStatus').innerHTML = (cams.length>0? '<span class=ok>✅ pronto</span>' : '<span class=warn>⚠️ nenhum dispositivo de vídeo listado</span>');
+      $('camInfo').textContent = msg.join('
+');
+    }catch(e){ $('camStatus').innerHTML = '<span class=err>❌ erro</span>'; $('camInfo').textContent = String(e); }
+  }
+
+  async function checkPlanilha(){
+    try{
+      const r = await fetch('/planilha.json', {cache:'no-store'});
+      const txt = await r.text();
+      $('planStatus').innerHTML = (r.ok? '<span class=ok>✅ ' + r.status + '</span>' : '<span class=err>❌ ' + r.status + '</span>');
+      try{
+        const j = JSON.parse(txt);
+        const qtd = Array.isArray(j.funcionarios)? j.funcionarios.length : 0;
+        $('planInfo').textContent = 'Funcionários: ' + qtd + '
+Chaves: ' + Object.keys(j).join(', ');
+      }catch(e){ $('planInfo').textContent = 'Conteúdo não-JSON ou inválido.
+' + txt.slice(0,3000); }
+    }catch(e){ $('planStatus').innerHTML='<span class=err>❌ erro</span>'; $('planInfo').textContent = String(e); }
+  }
+
+  async function checkGViz(){
+    try{
+      const r = await fetch(GVIZ, {cache:'no-store'});
+      const t = await r.text();
+      const ok = r.ok && t.includes('google.visualization.Query.setResponse');
+      $('gvizStatus').innerHTML = ok? '<span class=ok>✅ ' + r.status + ' (GViz)</span>' : '<span class=warn>⚠️ ' + r.status + ' (conteúdo inesperado)</span>';
+      $('gvizInfo').textContent = t.slice(0,1200);
+      const last = localStorage.getItem('KC_LAST_SYNC_ISO');
+      $('lastSync').textContent = last? new Date(last).toLocaleString('pt-BR') : '—';
+    }catch(e){ $('gvizStatus').innerHTML = '<span class=err>❌ erro</span>'; $('gvizInfo').textContent = String(e); }
+  }
+
+  checkCamera(); checkPlanilha(); checkGViz();
+})();
+</script>
+</body>
+</html>
