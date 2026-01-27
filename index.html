@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KnifeControl Usuário — Fallback Google Forms (Sync)</title>
+  <link rel="icon" type="image/png" href="https://pfst.cf2.poecdn.net/base/image/66a86ff2e9d405ae0301524bd658a3243a0dd6b3e9b05bb2cf53c4d11af08062?w=71&h=69" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+  <style>
+    body { box-sizing: border-box; margin: 0; padding: 0; }
+    .app-header { background: white; border-bottom: 2px solid #e5e7eb; padding: 8px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .app-header img { height: 50px; width: auto; display: block; margin: 0 auto; }
+
+    .scanner-container { position: relative; width: 100%; height: 260px; background: #000; border: 2px solid #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; overflow: hidden; }
+    .scanner-container:hover { border-color: #1d4ed8; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    .scanner-container video { width: 100%; height: 100%; object-fit: cover; }
+    .scanner-inactive { background: linear-gradient(45deg, #f3f4f6, #e5e7eb); border: 2px dashed #9ca3af; }
+    .scanner-inactive:hover { border-color: #3b82f6; background: linear-gradient(45deg, #eff6ff, #dbeafe); }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="app-header">
+    <img src="https://pfst.cf2.poecdn.net/base/image/b4c6aca4c7db7589b9f0de13c8ee90d92d0ff180d82b105e4e1961cae846d611?w=225&h=92" alt="LSG Sky Chefs" />
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="bg-white rounded-2xl shadow-2xl p-8">
+        <div class="text-center mb-6">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">🔪 KnifeControl</h1>
+          <p class="text-gray-600 mt-2">Sistema de Controle de Objetos — <span class="font-semibold">Modo Fallback (Google Forms)</span></p>
+        </div>
+        <form id="loginForm" class="space-y-6">
+          <div>
+            <label for="setor" class="block text-sm font-medium text-gray-700 mb-2">Setor</label>
+            <select id="setor" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">Carregando setores...</option>
+            </select>
+          </div>
+          <div>
+            <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">Senha do setor</label>
+            <input type="password" id="senha" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite a senha do setor" />
+          </div>
+          <div id="connectionStatus" class="text-center text-sm text-green-600">✅ Conectado (Fallback Google Forms)</div>
+          <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 shadow-lg">Entrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div id="mainMenu" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div class="text-center">
+          <h2 class="text-xl font-bold text-gray-800">Bem-vindo!</h2>
+          <p class="text-gray-600" id="setorAtual">Setor: </p>
+          <div class="mt-2 text-xs text-green-600 flex items-center justify-content-center">
+            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+            <span id="syncStatus">Sincronizando status com planilha do Forms…</span>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <button onclick="showScreen('retiradaScreen')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📤</div>
+          <div class="text-xl font-bold">Retirada de Objeto</div>
+          <div class="text-sm opacity-90 mt-1">Registrar retirada (marca como <b>Em Uso</b>)</div>
+        </button>
+        <button onclick="showScreen('devolucaoScreen')" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📥</div>
+          <div class="text-xl font-bold">Devolução de Objeto</div>
+          <div class="text-sm opacity-90 mt-1">Devolver apenas itens <b>Em Uso</b> no seu setor</div>
+        </button>
+        <button onclick="showScreen('inventarioScreen')" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📋</div>
+          <div class="text-xl font-bold">Inventário de Fim de Turno</div>
+          <div class="text-sm opacity-90 mt-1">Bloqueia se houver itens <b>Em Uso</b></div>
+        </button>
+        <button onclick="logout()" class="w-full bg-gray-200 text-gray-700 p-4 rounded-xl hover:bg-gray-300 transition duration-300 mt-4">
+          <div class="text-sm font-semibold">🚪 Sair</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RETIRADA -->
+  <div id="retiradaScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📤</span> Retirada de Objeto
+        </h2>
+
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Ler QR do crachá ou digitar a matrícula</div>
+          <button type="button" class="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700" onclick="startScanner('retirada')">Ler QR</button>
+        </div>
+        <div id="scannerRetirada" class="scanner-container scanner-inactive mb-2"></div>
+        <div id="scanStatus-retirada" class="hidden mb-4 p-3 rounded-lg text-center font-semibold"></div>
+
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula</label>
+          <div class="flex space-x-2">
+            <input type="text" id="codigoManualRetirada" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Código / Matrícula" />
+            <button onclick="identificarManual('retirada')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
+          </div>
+        </div>
+
+        <div id="funcionarioInfoRetirada" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
+        <div id="leituraInfoRetirada" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
+
+        <div id="objetoSelectionRetirada" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o Objeto:</label>
+          <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-3">
+            <option value="">Selecione um objeto...</option>
+          </select>
+          <div class="text-xs text-gray-500 mb-3">Se não encontrar na lista, digite abaixo:</div>
+          <input type="text" id="objetoRetiradaManual" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Nome do objeto" />
+          <button onclick="confirmarRetirada()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Confirmar Retirada</button>
+        </div>
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVOLUÇÃO -->
+  <div id="devolucaoScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📥</span> Devolução de Objeto
+        </h2>
+
+        <div id="devolucaoLista" class="grid grid-cols-2 gap-2 mb-2"></div>
+        <div id="devolucaoEmpty" class="hidden text-gray-500 text-sm p-3 border rounded-lg">Nenhum objeto em uso neste setor.</div>
+
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTÁRIO -->
+  <div id="inventarioScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📋</span> Inventário de Fim de Turno
+        </h2>
+
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Ler QR do crachá ou digitar a matrícula</div>
+          <button type="button" class="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700" onclick="startScanner('inventario')">Ler QR</button>
+        </div>
+        <div id="scannerInventario" class="scanner-container scanner-inactive mb-2"></div>
+        <div id="scanStatus-inventario" class="hidden mb-4 p-3 rounded-lg text-center font-semibold"></div>
+
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula</label>
+          <div class="flex space-x-2">
+            <input type="text" id="codigoManualInventario" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Código / Matrícula" />
+            <button onclick="identificarManual('inventario')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
+          </div>
+        </div>
+
+        <div id="funcionarioInfoInventario" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
+        <div id="leituraInfoInventario" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
+
+        <div id="statusObjetosInventario" class="hidden mb-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Status dos Objetos do Setor:</h3>
+          <div id="listaObjetosInventario" class="space-y-2"></div>
+        </div>
+
+        <div id="inventarioActions" class="hidden">
+          <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">Finalizar Inventário</button>
+          <div id="inventarioAviso" class="text-sm text-red-600 mt-2 hidden">⚠️ Há objetos em uso. Finalização bloqueada.</div>
+        </div>
+
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all">
+      <div class="text-center mb-6">
+        <div class="text-4xl mb-3" id="confirmIcon">❓</div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2" id="confirmTitle">Confirmar Ação</h3>
+        <p class="text-gray-600" id="confirmMessage"></p>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="cancelConfirm()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300">Não</button>
+        <button id="confirmButton" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">Sim</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="hidden fixed top-20 right-4 z-50 max-w-sm">
+    <div id="toastContent" class="rounded-xl shadow-2xl p-4 transform transition-all"></div>
+  </div>
+
+  <script>
+    // =================== CONFIG ===================
+    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScKBnRZ2StGX5qIqGVPrsXbt-hTbTawDYWqR3iEELCq9of7Xw/formResponse';
+    const FORMS_FIELDS = {
+      objeto: 'entry.587663124', matricula: 'entry.360956002', funcionario: 'entry.245251034', setor: 'entry.431322508', timestamp: 'entry.2072805918', emUso: 'entry.1169418597', devolvido: 'entry.2075298705'
+    };
+    const CHECKBOX_LABELS = { emUso: 'Em Uso', devolvido: 'Devolvido' };
+
+    // 👉 Configure aqui sua planilha de respostas (Google Sheets) publicada para web
+    // Use o formato GViz JSON (Visualization API):
+    //   https://docs.google.com/spreadsheets/d/SEU_SHEET_ID/gviz/tq?tqx=out:json&sheet=NomeDaAba
+    // A aba deve ser a que contém as respostas do Google Forms.
+    const FORMS_RESP_GVIS_URL = 'https://docs.google.com/spreadsheets/d/1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE/edit?gid=324654921#gid=324654921'; // TODO: Substituir
+
+    // Funcionários e objetos locais
+    const EMPLOYEE_JSON_URL = '/planilha.json'; // sua base (funcionarios + setores + objetos + senhas)
+
+    // Se não houver planilha.json acessível, estes serão o fallback
+    const LOCAL_FUNCIONARIOS = [
+      { matricula: '10001', nome: 'João Silva', setor: 'Padaria' },
+      { matricula: '10002', nome: 'Maria Souza', setor: 'Açougue' },
+      { matricula: '10003', nome: 'Carlos Pereira', setor: 'Cocção' },
+      { matricula: '10004', nome: 'Ana Lima', setor: 'Confeitaria' },
+      { matricula: '10005', nome: 'Vitor Teste', setor: 'Teste' }
+    ];
+    const LOCAL_SETORES = ['Teste','Açougue','Cocção','Confeitaria','Corte de Frios','Ensacamento de Pães','Gard Manger','Padaria','Pré-Preparo','Montagem de Sanduíches'];
+    const LOCAL_OBJETOS = {
+      'Teste': ['FACA TESTE'],
+      'Açougue': ['95 – FACA','100 – FACA','107 – FACA','108 – FACA'],
+      'Cocção': ['45 – FACA','51 – FACA','52 – FACA','53 – FACA'],
+      'Confeitaria': ['72 – FACA','73 – FACA','74 – FACA'],
+      'Corte de Frios': ['32 – FACA','33 – FACA'],
+      'Ensacamento de Pães': ['20 – FACA','66 – FACA'],
+      'Gard Manger': ['02 – TESOURA','17 – FACA','18 – FACA','44 – FACA','45 – FACA','48 – FACA','49 – FACA'],
+      'Montagem de Sanduíches': ['60 – FACA','61 – FACA','62 – FACA','63 – FACA','64 – FACA','65 – FACA','66 – TESOURA'],
+      'Padaria': ['88 – FACA','89 – FACA','0028199 – ESTILETE','0028200 – ESTILETE'],
+      'Pré-Preparo': ['84 – FACA','85 – FACA','86 – FACA','87 – FACA','89 – FACA','90 – FACA','91 – TESOURA']
+    };
+
+    const ENFORCE_LOCAL_PASSWORD = true;
+    const LOCAL_SENHAS = { 'Produção':'1234','Cozinha Quente':'1234','Cozinha Fria':'1234','Expedição':'1234','Teste':'a','Açougue':'acougue','Cocção':'coccao','Confeitaria':'confeitaria','Corte de Frios':'frios','Ensacamento de Pães':'ensacamento','Gard Manger':'gard','Padaria':'padaria','Pré-Preparo':'preparo','Montagem de Sanduíches':'montagem' };
+
+    // =================== ESTADO ===================
+    let currentSetor = '';
+    let currentFuncionario = null; // { id, nome, setor, dataLeitura }
+    let qrScanners = {}; let scannerActive = {};
+
+    let FUNCIONARIOS = [];
+    let OBJETOS = LOCAL_OBJETOS;
+    let SETORES = LOCAL_SETORES;
+
+    // STATUS remoto (vindos da planilha-resposta do Forms) por setor/objeto
+    // Estrutura: { [setor]: { [objeto]: 'Em Uso'|'Devolvido' } }
+    let REMOTE_STATUS = {};
+
+    // =================== UTIL ===================
+    const STORAGE_KEY = 'KC_STATUS_V1';
+    function loadStatus(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); }catch(e){ return {}; } }
+    function saveStatus(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+
+    function getSectorStatusLocal(setor){ const db=loadStatus(); return db[setor]||{}; }
+    function setObjectStatusLocal(setor, objeto, status){ const db=loadStatus(); if(!db[setor]) db[setor]={}; db[setor][objeto] = { status, ts: new Date().toISOString() }; saveStatus(db); }
+
+    function getMergedStatus(setor){
+      // REMOTE (autoridade) > LOCAL (interino)
+      const remote = REMOTE_STATUS[setor] || {};
+      const local = getSectorStatusLocal(setor);
+      const merged = { ...local, ...remote };
+      return merged; // { objeto: {status, ts?} ou 'status' string } — normalizamos ao ler
+    }
+
+    function normalize(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+    function getNomeByMatricula(m){ const f = FUNCIONARIOS.find(x=> String(x.matricula)===String(m)); return f? f.nome : ''; }
+    function getMatriculaByNome(n){ const N=normalize(n); const f = FUNCIONARIOS.find(x=> normalize(x.nome)===N); return f? String(f.matricula):''; }
+
+    function setSyncStatus(msg, ok=true){ const el=document.getElementById('syncStatus'); if(!el) return; el.textContent = (ok? '✅ ' : '⚠️ ') + msg; el.className = ok? 'text-green-600' : 'text-yellow-700'; }
+
+    // =================== CARREGAMENTO DE BASE ===================
+    async function loadEmployeesAndConfig(){
+      try{
+        const resp = await fetch(EMPLOYEE_JSON_URL, { cache:'no-store' });
+        if(resp.ok){ const j = await resp.json();
+          if(Array.isArray(j.funcionarios)) FUNCIONARIOS = j.funcionarios; else FUNCIONARIOS = LOCAL_FUNCIONARIOS;
+          if(j.objetos && typeof j.objetos==='object') OBJETOS = j.objetos; else OBJETOS = LOCAL_OBJETOS;
+          if(Array.isArray(j.setores)) SETORES = j.setores; else SETORES = LOCAL_SETORES;
+        } else { FUNCIONARIOS = LOCAL_FUNCIONARIOS; OBJETOS = LOCAL_OBJETOS; SETORES = LOCAL_SETORES; }
+      }catch(e){ FUNCIONARIOS = LOCAL_FUNCIONARIOS; OBJETOS = LOCAL_OBJETOS; SETORES = LOCAL_SETORES; }
+    }
+
+    // =================== LER PLANILHA-RESPOSTA (GViz JSON) ===================
+    async function refreshRemoteStatus(){
+      if(!FORMS_RESP_GVIS_URL || FORMS_RESP_GVIS_URL.startsWith('COLE_AQUI')){ setSyncStatus('Configure a URL da planilha do Forms em GViz JSON', false); return; }
+      try{
+        const resp = await fetch(FORMS_RESP_GVIS_URL, { cache:'no-store' });
+        if(!resp.ok){ setSyncStatus('Falha ao acessar planilha do Forms ('+resp.status+')', false); return; }
+        const txt = await resp.text();
+        // Remove prefix/sufixo do GViz: /*O_o*/ google.visualization.Query.setResponse(...);
+        const jsonStr = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+        const gviz = JSON.parse(jsonStr);
+        const cols = (gviz.table.cols||[]).map(c=>c.label?.trim());
+        const rows = gviz.table.rows||[];
+
+        // Esperado: colunas com rótulos do seu Form (ajuste aqui se necessário)
+        // Ex: Objeto, Matrícula, Funcionário, Setor, Timestamp, Em Uso, Devolvido
+        const idx = {
+          objeto: cols.findIndex(x=> /objeto/i.test(x||'')),
+          matricula: cols.findIndex(x=> /matr[ií]cula/i.test(x||'')),
+          funcionario: cols.findIndex(x=> /funcion[áa]rio/i.test(x||'')),
+          setor: cols.findIndex(x=> /setor/i.test(x||'')),
+          timestamp: cols.findIndex(x=> /timestamp|data|hora/i.test(x||'')),
+          emUso: cols.findIndex(x=> /em\s*uso/i.test(x||'')),
+          devolvido: cols.findIndex(x=> /devolvid/i.test(x||''))
+        };
+
+        const records = rows.map(r=>{
+          const c = r.c||[];
+          const get = i => (i>=0 && c[i] && c[i].v!=null) ? String(c[i].v) : '';
+          return {
+            objeto: get(idx.objeto).trim(),
+            matricula: get(idx.matricula).trim(),
+            funcionario: get(idx.funcionario).trim(),
+            setor: get(idx.setor).trim(),
+            timestamp: get(idx.timestamp).trim(),
+            emUso: /em\s*uso/i.test(get(idx.emUso)),
+            devolvido: /devolvid/i.test(get(idx.devolvido))
+          };
+        }).filter(r=>r.objeto && r.setor);
+
+        // Reduce: último status por setor/objeto baseado no timestamp
+        const byKey = {}; // key = setor||objeto
+        for(const r of records){
+          const key = r.setor+'\u0001'+r.objeto;
+          const ts = Date.parse(r.timestamp) || 0;
+          if(!byKey[key] || ts > byKey[key].ts){
+            byKey[key] = { status: r.devolvido? 'Devolvido' : (r.emUso? 'Em Uso' : 'Devolvido'), ts };
+          }
+        }
+        // Preenche REMOTE_STATUS
+        REMOTE_STATUS = {};
+        Object.entries(byKey).forEach(([key, val])=>{
+          const [setor, objeto] = key.split('\u0001');
+          if(!REMOTE_STATUS[setor]) REMOTE_STATUS[setor] = {};
+          REMOTE_STATUS[setor][objeto] = val; // {status, ts}
+        });
+        setSyncStatus('Status sincronizado com a planilha do Forms');
+      }catch(e){ console.error(e); setSyncStatus('Erro ao ler GViz JSON do Forms', false); }
+    }
+
+    // =================== TOAST ===================
+    function showToast(message, type='success'){
+      const toast=document.getElementById('toast'); const toastContent=document.getElementById('toastContent');
+      const bg= type==='success'?'bg-green-500':'bg-red-500'; const icon= type==='success'?'✅':'❌';
+      toastContent.className=`rounded-xl shadow-2xl p-4 text-white ${bg}`;
+      toastContent.innerHTML=`<div class=\"flex items-center space-x-3\"><div class=\"text-2xl\">${icon}</div><div class=\"flex-1 font-semibold\">${message}</div></div>`;
+      toast.classList.remove('hidden'); setTimeout(()=>toast.classList.add('hidden'),3200);
+    }
+
+    // =================== LOGIN & SETORES ===================
+    function loadSetores(){ const setorSelect=document.getElementById('setor'); setorSelect.innerHTML='<option value=\"\">Selecione um setor...</option>'; (SETORES||LOCAL_SETORES).forEach(s=>{ const opt=document.createElement('option'); opt.value=s; opt.textContent=s; setorSelect.appendChild(opt); }); }
+
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const setor=document.getElementById('setor').value; const senha=document.getElementById('senha').value;
+      if(!setor||!senha){ showToast('Por favor, preencha todos os campos','error'); return; }
+      if(ENFORCE_LOCAL_PASSWORD){ if(!LOCAL_SENHAS[setor] || LOCAL_SENHAS[setor]!==senha){ showToast('Senha incorreta','error'); return; } }
+      currentSetor=setor; document.getElementById('setorAtual').textContent='Setor: '+currentSetor;
+      showScreen('mainMenu'); showToast('Login realizado com sucesso!','success');
+      // Após login, sincroniza status remoto
+      refreshRemoteStatus();
+    });
+
+    function logout(){ Object.keys(qrScanners).forEach(ctx=>{ if(qrScanners[ctx]){ qrScanners[ctx].stop().catch(()=>{}); }}); currentSetor=''; currentFuncionario=null; document.getElementById('senha').value=''; document.getElementById('setor').value=''; showScreen('loginScreen'); }
+
+    // =================== NAVEGAÇÃO ===================
+    function showScreen(id){
+      ['loginScreen','mainMenu','retiradaScreen','devolucaoScreen','inventarioScreen'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+      const el=document.getElementById(id); el.classList.remove('hidden'); el.classList.add('fade-in');
+      if(id==='retiradaScreen'){ loadObjetosDisponiveis(); resetScanner('scannerRetirada','retirada'); bindMatriculaAutoFill('retirada'); }
+      if(id==='devolucaoScreen'){ montarListaDevolucao(); }
+      if(id==='inventarioScreen'){ resetScanner('scannerInventario','inventario'); bindMatriculaAutoFill('inventario'); montarInventario(); }
+    }
+
+    // =================== QR CODE ===================
+    function ensureSecure(){ if(location.protocol!=='https:' && location.hostname!=='localhost'){ showToast('Para abrir a câmera, use HTTPS (requisito do navegador).','error'); return false; } return true; }
+
+    function initializeScanner(containerId, context){
+      const container=document.getElementById(containerId);
+      resetScanner(containerId, context);
+      container.onclick = ()=> startScanner(context);
+    }
+
+    async function startScanner(context){
+      if(!ensureSecure()) return;
+      const containerId = (context==='retirada'?'scannerRetirada':'scannerInventario');
+      const container = document.getElementById(containerId);
+      try{
+        container.innerHTML='<div id="qr-reader-'+context+'" style="width: 100%; height: 100%"></div>'; container.classList.remove('scanner-inactive');
+        const scanner=new Html5Qrcode('qr-reader-'+context); qrScanners[context]=scanner;
+        await scanner.start({facingMode:'environment'},{fps:10, qrbox:{width:240, height:240}}, (decodedText)=>{ processQRCode(decodedText, context); stopScanner(context); }, (error)=>{});
+        scannerActive[context]=true; updateScanStatus(context, '📷 Câmera ativa — Aponte para o QR Code', 'loading');
+      }catch(err){ console.error('Erro ao iniciar scanner:', err); updateScanStatus(context,'❌ Erro ao acessar câmera','error'); resetScanner(containerId, context); }
+    }
+
+    function stopScanner(context){ if(qrScanners[context]){ qrScanners[context].stop().then(()=>{ scannerActive[context]=false; const containerId=(context==='retirada'?'scannerRetirada':'scannerInventario'); resetScanner(containerId, context); }).catch(()=>{}); } }
+    function resetScanner(containerId, context){ const c=document.getElementById(containerId); if(!c) return; c.classList.add('scanner-inactive'); c.innerHTML=`<div class="text-center text-gray-600 p-4"><div class="text-4xl mb-2">📷</div><div class="font-semibold">Toque ou use o botão "Ler QR"</div><div class="text-sm mt-1">ou digite a matrícula abaixo</div></div>`; const st=document.getElementById('scanStatus-'+context); if(st){ st.classList.add('hidden'); st.textContent=''; } }
+    function updateScanStatus(context, message, type){ const el=document.getElementById('scanStatus-'+context); if(!el) return; el.classList.remove('hidden','bg-blue-100','bg-green-100','bg-red-100','text-blue-700','text-green-700','text-red-700'); if(type==='loading'){ el.classList.add('bg-blue-100','text-blue-700'); } else if(type==='active'){ el.classList.add('bg-green-100','text-green-700'); } else if(type==='error'){ el.classList.add('bg-red-100','text-red-700'); } el.textContent=message; }
+
+    function bindMatriculaAutoFill(context){
+      const inputId = context==='retirada' ? 'codigoManualRetirada' : 'codigoManualInventario';
+      const el = document.getElementById(inputId); if(!el) return;
+      el.addEventListener('input', ()=> autoFillNomeFromMatricula(context));
+      el.addEventListener('blur',  ()=> autoFillNomeFromMatricula(context));
+    }
+
+    function parseCrachaData(raw){
+      // Tenta JSON: {"matricula":"123","nome":"Fulano"}
+      try{ const o=JSON.parse(raw); return { matricula: o.matricula? String(o.matricula):'', nome: o.nome||'' }; }catch(e){}
+      // 12345|FULANO  ou  12345;FULANO
+      const r1 = raw.match(/^\s*(\d+)\s*[|;,\t]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
+      // Matrícula:123; Nome: Fulano
+      const r2 = raw.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^\n]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
+      // só números => matrícula
+      if(/^\s*\d+\s*$/.test(raw)) return { matricula: raw.trim(), nome:'' };
+      // só texto => nome
+      return { matricula:'', nome: raw.trim() };
+    }
+
+    async function processQRCode(code, context){
+      const { matricula, nome } = parseCrachaData(String(code||''));
+      let mat = (matricula||'').trim();
+      let nm  = (nome||'').trim();
+      if(!mat && nm){ mat = getMatriculaByNome(nm); }
+      if(mat && !nm){ nm = getNomeByMatricula(mat); }
+      if(!mat){ showToast('Não foi possível identificar a matrícula a partir do QR.','error'); return; }
+      if(!FUNCIONARIOS.some(f=> String(f.matricula)===String(mat))){ showToast('Matrícula não cadastrada.','error'); return; }
+
+      currentFuncionario={ id: mat, nome:nm||'', setor: currentSetor, dataLeitura: new Date() };
+      if(context==='retirada'){
+        showFuncionarioInfo();
+        const nomeEl = document.getElementById('nomeFuncionarioRetirada'); if(nm && nomeEl){ nomeEl.value = nm; }
+        loadObjetosDisponiveis();
+      }
+      if(context==='inventario'){
+        showFuncionarioInfoInventario();
+        const nomeEl = document.getElementById('nomeFuncionarioInventario'); if(nm && nomeEl){ nomeEl.value = nm; }
+        montarInventario();
+      }
+      updateScanStatus(context,'✅ Funcionário identificado','active'); setTimeout(()=>{ const st=document.getElementById('scanStatus-'+context); if(st) st.classList.add('hidden'); },1800);
+    }
+
+    async function identificarManual(context){
+      const inputId = context==='retirada' ? 'codigoManualRetirada' : 'codigoManualInventario';
+      const codigo = document.getElementById(inputId).value.trim(); if(!codigo){ showToast('Por favor, digite a matrícula','error'); return; }
+      // valida contra base
+      if(!FUNCIONARIOS.some(f=> String(f.matricula)===String(codigo))){ showToast('Matrícula não cadastrada.','error'); return; }
+      await processQRCode(codigo, context);
+    }
+
+    // =================== UI FUNCIONÁRIO ===================
+    function showFuncionarioInfo(){ const info=document.getElementById('funcionarioInfoRetirada'); const leitura=document.getElementById('leituraInfoRetirada'); const selection=document.getElementById('objetoSelectionRetirada'); info.classList.remove('hidden'); leitura.classList.remove('hidden'); selection.classList.remove('hidden'); info.innerHTML=`<div class=\"grid grid-cols-1 gap-2\"><div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div><label class=\"text-sm text-gray-700 mt-1\"><strong>👤 Nome:</strong></label><input id=\"nomeFuncionarioRetirada\" class=\"w-full px-3 py-2 border border-green-300 rounded-lg\" placeholder=\"(preenchido automaticamente, se cadastrado)\" /><div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div></div>`; const dataLeitura=currentFuncionario.dataLeitura||new Date(); leitura.innerHTML=`<div><strong>🕐 Leitura:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`; }
+    function showFuncionarioInfoInventario(){ const info=document.getElementById('funcionarioInfoInventario'); const leitura=document.getElementById('leituraInfoInventario'); info.classList.remove('hidden'); leitura.classList.remove('hidden'); info.innerHTML=`<div class=\"grid grid-cols-1 gap-2\"><div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div><label class=\"text-sm text-gray-700 mt-1\"><strong>👤 Nome:</strong></label><input id=\"nomeFuncionarioInventario\" class=\"w-full px-3 py-2 border border-green-300 rounded-lg\" placeholder=\"(preenchido automaticamente, se cadastrado)\" /><div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div></div>`; const dataLeitura=currentFuncionario.dataLeitura||new Date(); leitura.innerHTML=`<div><strong>🕐 Leitura:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`; }
+
+    // =================== OBJETOS (RETIRADA) ===================
+    function loadObjetosDisponiveis(){
+      const select=document.getElementById('objetoRetirada'); select.innerHTML='<option value=\"\">Selecione um objeto...</option>';
+      (OBJETOS[currentSetor]||[]).forEach(nome=>{ const o=document.createElement('option'); o.value=nome; o.textContent=nome; select.appendChild(o); });
+    }
+
+    function confirmarRetirada(){
+      const objSel=(document.getElementById('objetoRetirada').value||'').trim(); const objManual=(document.getElementById('objetoRetiradaManual').value||'').trim(); const objeto= objManual || objSel;
+      if(!objeto){ showToast('Selecione ou digite o objeto','error'); return; }
+      if(!currentFuncionario){ showToast('Identifique o funcionário primeiro','error'); return; }
+
+      const merged = getMergedStatus(currentSetor);
+      const rec = merged[objeto];
+      const st = typeof rec==='string'? rec : (rec?.status || 'Devolvido');
+      if(st==='Em Uso'){ showToast('Este objeto já está Em Uso','error'); return; }
+
+      const nome=(document.getElementById('nomeFuncionarioRetirada')?.value||'').trim();
+      showConfirm(`Confirma a retirada do objeto \"${objeto}\"?`, async ()=>{
+        try{
+          await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status:'Em Uso' });
+          setObjectStatusLocal(currentSetor, objeto, 'Em Uso');
+          showToast('Retirada registrada com sucesso!','success');
+          // Atualiza remoto em background (tolerante a atraso de propagação)
+          setTimeout(refreshRemoteStatus, 2000);
+          // Reset leve
+          currentFuncionario=null; document.getElementById('funcionarioInfoRetirada').classList.add('hidden'); document.getElementById('leituraInfoRetirada').classList.add('hidden'); document.getElementById('objetoSelectionRetirada').classList.add('hidden'); document.getElementById('codigoManualRetirada').value=''; document.getElementById('objetoRetiradaManual').value=''; resetScanner('scannerRetirada','retirada');
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== DEVOLUÇÃO (somente itens Em Uso) ===================
+    function montarListaDevolucao(){
+      const grid = document.getElementById('devolucaoLista'); const empty = document.getElementById('devolucaoEmpty');
+      grid.innerHTML='';
+      const merged = getMergedStatus(currentSetor);
+      const emUso = Object.entries(merged).filter(([obj, rec])=> (typeof rec==='string'? rec : (rec?.status||'Devolvido'))==='Em Uso').map(([obj])=>obj);
+      if(emUso.length===0){ empty.classList.remove('hidden'); return; } else { empty.classList.add('hidden'); }
+      emUso.forEach(nome=>{
+        const btn=document.createElement('button');
+        btn.className='px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border text-blue-700 font-semibold';
+        btn.textContent=nome;
+        btn.onclick=()=> confirmarDevolucaoObjeto(nome);
+        grid.appendChild(btn);
+      });
+    }
+
+    function confirmarDevolucaoObjeto(objeto){
+      showConfirm(`Confirmar devolução do objeto \"${objeto}\"?`, async ()=>{
+        try{
+          await postToForms({ objeto, matricula: '', funcionario: '', setor: currentSetor, status:'Devolvido' });
+          setObjectStatusLocal(currentSetor, objeto, 'Devolvido');
+          showToast('Devolução registrada com sucesso!','success');
+          setTimeout(refreshRemoteStatus, 2000);
+          montarListaDevolucao();
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== INVENTÁRIO (lista todos + bloqueio se Em Uso) ===================
+    function montarInventario(){
+      const container=document.getElementById('listaObjetosInventario'); const statusDiv=document.getElementById('statusObjetosInventario'); const actionsDiv=document.getElementById('inventarioActions'); const aviso=document.getElementById('inventarioAviso');
+      container.innerHTML='';
+      const lista=(OBJETOS[currentSetor]||[]);
+      statusDiv.classList.remove('hidden'); actionsDiv.classList.remove('hidden');
+      let existeEmUso=false;
+      const merged = getMergedStatus(currentSetor);
+      lista.forEach((nome)=>{
+        const rec = merged[nome];
+        const st = typeof rec==='string'? rec : (rec?.status||'Devolvido');
+        if(st==='Em Uso') existeEmUso=true;
+        const row=document.createElement('div'); row.className='flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+        row.innerHTML = `<div class=\"font-semibold text-gray-800\">${nome}</div>` +
+          `<div class=\"text-sm\">`+
+          (st==='Em Uso' ? `<span class='bg-red-100 text-red-700 px-3 py-1 rounded-full'>Em Uso</span>` : `<span class='bg-green-100 text-green-700 px-3 py-1 rounded-full'>Devolvido</span>`)
+          + `</div>`;
+        container.appendChild(row);
+      });
+      const btn = document.getElementById('btnFinalizarInventario');
+      if(existeEmUso){ btn.disabled=true; aviso.classList.remove('hidden'); } else { btn.disabled=false; aviso.classList.add('hidden'); }
+    }
+
+    async function finalizarInventario(){
+      if(!currentFuncionario){ showToast('Identifique o funcionário primeiro','error'); return; }
+      const nome=(document.getElementById('nomeFuncionarioInventario')?.value||'').trim();
+      const lista=(OBJETOS[currentSetor]||[]);
+      const merged = getMergedStatus(currentSetor);
+      const algumEmUso = Object.values(merged).some(rec=> (typeof rec==='string'? rec : (rec?.status||'Devolvido'))==='Em Uso');
+      if(algumEmUso){ showToast('Há objetos Em Uso. Inventário bloqueado.','error'); return; }
+      showConfirm('Confirmar finalização do inventário e envio ao Forms?', async ()=>{
+        try{
+          for(const objeto of lista){
+            const rec = merged[objeto];
+            const status = typeof rec==='string'? rec : (rec?.status||'Devolvido');
+            await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status });
+          }
+          showToast('Inventário enviado com sucesso!','success');
+          setTimeout(refreshRemoteStatus, 2000);
+          // Reset visual
+          currentFuncionario=null; document.getElementById('funcionarioInfoInventario').classList.add('hidden'); document.getElementById('leituraInfoInventario').classList.add('hidden'); document.getElementById('statusObjetosInventario').classList.add('hidden'); document.getElementById('inventarioActions').classList.add('hidden'); document.getElementById('codigoManualInventario').value=''; resetScanner('scannerInventario','inventario');
+          setTimeout(()=>showScreen('mainMenu'),700);
+        }catch(err){ showToast('Falha ao enviar ao Forms: '+err.message,'error'); }
+      });
+    }
+
+    // =================== POST AO FORMS ===================
+    async function postToForms({ objeto, matricula, funcionario, setor, status }){
+      if(!GOOGLE_FORM_URL.includes('/formResponse')){ throw new Error('GOOGLE_FORM_URL inválida'); }
+      const fd=new FormData();
+      fd.append(FORMS_FIELDS.objeto, objeto||'');
+      fd.append(FORMS_FIELDS.matricula, matricula||'');
+      fd.append(FORMS_FIELDS.funcionario, funcionario||'');
+      fd.append(FORMS_FIELDS.setor, setor||'');
+      fd.append(FORMS_FIELDS.timestamp, new Date().toISOString());
+      if(status==='Em Uso')     fd.append(FORMS_FIELDS.emUso, CHECKBOX_LABELS.emUso);
+      if(status==='Devolvido')  fd.append(FORMS_FIELDS.devolvido, CHECKBOX_LABELS.devolvido);
+      await fetch(GOOGLE_FORM_URL, { method:'POST', mode:'no-cors', body: fd });
+    }
+
+    // =================== MODAL ===================
+    let confirmCallback=null;
+    function showConfirm(message, callback){ const modal=document.getElementById('confirmModal'); const msg=document.getElementById('confirmMessage'); const btn=document.getElementById('confirmButton'); msg.textContent=message; modal.classList.remove('hidden'); confirmCallback=callback; btn.onclick=function(){ modal.classList.add('hidden'); if(confirmCallback){ confirmCallback(); confirmCallback=null; } } }
+    function cancelConfirm(){ document.getElementById('confirmModal').classList.add('hidden'); confirmCallback=null; }
+
+    function voltarMenu(){ Object.keys(qrScanners).forEach(ctx=>{ if(scannerActive[ctx]){ stopScanner(ctx); } }); currentFuncionario=null; document.getElementById('codigoManualRetirada').value=''; document.getElementById('codigoManualInventario').value=''; document.getElementById('funcionarioInfoRetirada').classList.add('hidden'); document.getElementById('leituraInfoRetirada').classList.add('hidden'); document.getElementById('objetoSelectionRetirada').classList.add('hidden'); document.getElementById('funcionarioInfoInventario').classList.add('hidden'); document.getElementById('leituraInfoInventario').classList.add('hidden'); document.getElementById('statusObjetosInventario').classList.add('hidden'); document.getElementById('inventarioActions').classList.add('hidden'); showScreen('mainMenu'); }
+
+    // =================== BOOT ===================
+    async function boot(){
+      await loadEmployeesAndConfig();
+      loadSetores();
+      initializeScanner('scannerRetirada','retirada');
+      initializeScanner('scannerInventario','inventario');
+      // Sincroniza periodicamente (caso a planilha demore para atualizar)
+      setInterval(()=>{ if(currentSetor) refreshRemoteStatus(); }, 15000);
+    }
+    window.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+</html>

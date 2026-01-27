@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>KnifeControl — Relatório (planilha.json)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111827}
+    .wrap{max-width:1000px;margin:0 auto}
+    .card{background:#fff;border-radius:14px;box-shadow:0 10px 25px rgba(16,24,40,.08);padding:18px;margin-bottom:16px}
+    h1{margin:.2rem 0 1rem;font-size:22px}
+    .muted{color:#6b7280}
+    input[type="text"]{width:100%;max-width:420px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+    .w{white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>KnifeControl — Relatório de Configuração</h1>
+      <div class="muted">Fonte: <code>planilha.json</code> (mesmo domínio)</div>
+      <div style="margin-top:10px"><input id="filtro" type="text" placeholder="Filtrar por setor/objeto..." /></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px">Setores</h2>
+      <div class="muted">A senha não é exibida; apenas o status de presença (✅/❌).</div>
+      <table id="tb-setores"><thead><tr><th>Setor</th><th>Senha configurada</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px">Objetos por setor</h2>
+      <table id="tb-objetos"><thead><tr><th>Setor</th><th>Objetos</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <script>
+    const JSON_SHEET_URL = '/planilha.json';
+    let DATA = { setores:[], objetos:{}, setoresSenha:{}, funcionarios:[] };
+    let filtro = '';
+
+    function render(){
+      const tb1 = document.querySelector('#tb-setores tbody');
+      const tb2 = document.querySelector('#tb-objetos tbody');
+      tb1.innerHTML=''; tb2.innerHTML='';
+      const f = (filtro||'').trim().toLowerCase();
+      (DATA.setores||[]).forEach(setor=>{
+        if(f && !setor.toLowerCase().includes(f)) return;
+        const tr=document.createElement('tr');
+        const td1=document.createElement('td'); td1.textContent=setor; const td2=document.createElement('td');
+        td2.innerHTML = (DATA.setoresSenha && DATA.setoresSenha[setor]) ? '✅ Configurada' : '❌ Não configurada';
+        tr.appendChild(td1); tr.appendChild(td2); tb1.appendChild(tr);
+      });
+      Object.entries(DATA.objetos||{}).forEach(([setor, itens])=>{
+        const lista=(itens||[]).join(', ');
+        if(f && !(setor.toLowerCase().includes(f) || lista.toLowerCase().includes(f))) return;
+        const tr=document.createElement('tr');
+        const td1=document.createElement('td'); td1.textContent=setor; const td2=document.createElement('td'); td2.className='w'; td2.textContent=lista;
+        tr.appendChild(td1); tr.appendChild(td2); tb2.appendChild(tr);
+      });
+    }
+
+    async function boot(){
+      try{ const resp = await fetch(JSON_SHEET_URL, {cache:'no-store'}); if(!resp.ok) throw new Error(resp.status); DATA = await resp.json(); }
+      catch(e){ alert('Falha ao carregar planilha.json ('+e.message+'). Verifique o deploy.'); return; }
+      render();
+    }
+
+    document.getElementById('filtro').addEventListener('input', (e)=>{ filtro=e.target.value; render(); });
+    boot();
+  </script>
+</body>
+</html>

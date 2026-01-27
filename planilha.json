@@ -1,0 +1,628 @@
+{
+  "setores": [
+    "Teste",
+    "Açougue",
+    "Cocção",
+    "Confeitaria",
+    "Corte de Frios",
+    "Ensacamento de Pães",
+    "Gard Manger",
+    "Padaria",
+    "Pré-Preparo",
+    "Montagem de Sanduíches"
+  ],
+  "setoresSenha": {
+    "Produção": "1234",
+    "Cozinha Quente": "1234",
+    "Cozinha Fria": "1234",
+    "Expedição": "1234",
+    "Teste": "a",
+    "Açougue": "acougue",
+    "Cocção": "coccao",
+    "Confeitaria": "confeitaria",
+    "Corte de Frios": "frios",
+    "Ensacamento de Pães": "ensacamento",
+    "Gard Manger": "gard",
+    "Padaria": "padaria",
+    "Pré-Preparo": "preparo",
+    "Montagem de Sanduíches": "montagem"
+  },
+  "objetos": {
+    "Teste": [
+      "FACA TESTE"
+    ],
+    "Açougue": [
+      "95 – FACA",
+      "100 – FACA",
+      "107 – FACA",
+      "108 – FACA"
+    ],
+    "Cocção": [
+      "45 – FACA",
+      "51 – FACA",
+      "52 – FACA",
+      "53 – FACA"
+    ],
+    "Confeitaria": [
+      "72 – FACA",
+      "73 – FACA",
+      "74 – FACA"
+    ],
+    "Corte de Frios": [
+      "32 – FACA",
+      "33 – FACA"
+    ],
+    "Ensacamento de Pães": [
+      "20 – FACA",
+      "66 – FACA"
+    ],
+    "Gard Manger": [
+      "02 – TESOURA",
+      "17 – FACA",
+      "18 – FACA",
+      "44 – FACA",
+      "45 – FACA",
+      "48 – FACA",
+      "49 – FACA"
+    ],
+    "Montagem de Sanduíches": [
+      "60 – FACA",
+      "61 – FACA",
+      "62 – FACA",
+      "63 – FACA",
+      "64 – FACA",
+      "65 – FACA",
+      "66 – TESOURA"
+    ],
+    "Padaria": [
+      "88 – FACA",
+      "89 – FACA",
+      "0028199 – ESTILETE",
+      "0028200 – ESTILETE"
+    ],
+    "Pré-Preparo": [
+      "84 – FACA",
+      "85 – FACA",
+      "86 – FACA",
+      "87 – FACA",
+      "89 – FACA",
+      "90 – FACA",
+      "91 – TESOURA"
+    ]
+  },
+  "funcionarios": [
+   {
+  "matricula": 10000,
+  "nome": "USUÁRIO TESTE",
+  "setor": "SEGURANÇA",
+  "QR_Code": "10000"
+ },
+ {
+  "matricula": 17123,
+  "nome": "MARCELO RODRIGO DUTRA BERNARDINO",
+  "setor": "COCÇÃO",
+  "QR_Code": "17123"
+ },
+ {
+  "matricula": 17124,
+  "nome": "DARLENE ALEXANDRE DE OLIVEIRA ALVES",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "17124"
+ },
+ {
+  "matricula": 17125,
+  "nome": "WILIAN FmatriculaELIS DE OLIVEIRA",
+  "setor": "CORTE DE FRIOS",
+  "QR_Code": "17125"
+ },
+ {
+  "matricula": 17126,
+  "nome": "FABIO DOS SANTOS CARVALHO",
+  "setor": "COCÇÃO",
+  "QR_Code": "17126"
+ },
+ {
+  "matricula": 17127,
+  "nome": "ANA PAULA ALVES GODOY",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17127"
+ },
+ {
+  "matricula": 17128,
+  "nome": "BRENDA PAULA DOS SANTOS DA SILVA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17128"
+ },
+ {
+  "matricula": 17129,
+  "nome": "ELISANGELA PEREIRA",
+  "setor": "GARD MANGER",
+  "QR_Code": "17129"
+ },
+ {
+  "matricula": 17130,
+  "nome": "EVANIR SANTOS SPINDOLA CALDAS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17130"
+ },
+ {
+  "matricula": 17131,
+  "nome": "KAREN DA SILVA RIBEIRO",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17131"
+ },
+ {
+  "matricula": 17132,
+  "nome": "LUANA FRANCISCA BILUAI LUWANHICA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17132"
+ },
+ {
+  "matricula": "13220",
+  "nome": "WELLINGTON MARTINS DA SILVA",
+  "setor": "PADARIA",
+  "QR_Code": "13220"
+ },
+ {
+  "matricula": "13771",
+  "nome": "MARIA DO SOCORRO DA SILVA",
+  "setor": "GARD MANGER",
+  "QR_Code": "13771"
+ },
+ {
+  "matricula": "15388",
+  "nome": "ANA CARLA CONCEICAO DA SILVA",
+  "setor": "SUPERVISÃO",
+  "QR_Code": "15388"
+ },
+ {
+  "matricula": "15638",
+  "nome": "JULIANA BRAZ DA ROCHA",
+  "setor": "CONFEITARIA",
+  "QR_Code": "15638"
+ },
+ {
+  "matricula": "15680",
+  "nome": "PATRICIA AUGUSTA DE MORAIS VIANA COUTO",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "15680"
+ },
+ {
+  "matricula": "15795",
+  "nome": "ANDRESSA DE SOUZA GOMES DA SILVA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "15795"
+ },
+ {
+  "matricula": "15888",
+  "nome": "EDIMILA REGINA FREITAS DOS SANTOS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "15888"
+ },
+ {
+  "matricula": "16354",
+  "nome": "CRISTIANE TEIXEIRA DE SOUZA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16354"
+ },
+ {
+  "matricula": "16429",
+  "nome": "LILIANE DA SILVA GOMES",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "16429"
+ },
+ {
+  "matricula": "16484",
+  "nome": "FABIANA GONCALVES DE PAIVA",
+  "setor": "GARD MANGER",
+  "QR_Code": "16484"
+ },
+ {
+  "matricula": "16564",
+  "nome": "FELIPE VINICIUS DIAS DE OLIVEIRA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16564"
+ },
+ {
+  "matricula": "16602",
+  "nome": "LARISSA CASTRO DA ROCHA GOMES",
+  "setor": "SUPERVISÃO",
+  "QR_Code": "16602"
+ },
+ {
+  "matricula": "16661",
+  "nome": "FERNANDA MARTINS GOMES SANTOS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16661"
+ },
+ {
+  "matricula": "16744",
+  "nome": "VERONICA FAUSTINO BERNARDO",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16744"
+ },
+ {
+  "matricula": "16745",
+  "nome": "DIANA BARBOSA DE ARAUJO",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "16745"
+ },
+ {
+  "matricula": "16755",
+  "nome": "GISELLE PACHECO BARBOSA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16755"
+ },
+ {
+  "matricula": "16765",
+  "nome": "EDILANE DO NASCIMENTO",
+  "setor": "COCÇÃO",
+  "QR_Code": "16765"
+ },
+ {
+  "matricula": "16773",
+  "nome": "JENIFFER DA CONCEICAO DOS SANTOS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16773"
+ },
+ {
+  "matricula": "16777",
+  "nome": "LILIAN CRISTINA DE O BATISTA NASCIMENTO",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "16777"
+ },
+ {
+  "matricula": "16796",
+  "nome": "JONAS HENRIQUE DE SOUZA MENEZES",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "16796"
+ },
+ {
+  "matricula": "16797",
+  "nome": "MARCELLO AUGUSTO DA SILVA",
+  "setor": "REFEITORIO",
+  "QR_Code": "16797"
+ },
+ {
+  "matricula": "16808",
+  "nome": "ALVINA AMARO DA SILVA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16808"
+ },
+ {
+  "matricula": "16820",
+  "nome": "JOYCE FERREIRA DE ARAUJO",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "16820"
+ },
+ {
+  "matricula": "16838",
+  "nome": "PAMELA CRISTINA DA SILVA",
+  "setor": "COCÇÃO",
+  "QR_Code": "16838"
+ },
+ {
+  "matricula": "16840",
+  "nome": "ELIZABETTE DA SILVA LIMA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16840"
+ },
+ {
+  "matricula": "16841",
+  "nome": "FLORRANCE FARIA SANTOS",
+  "setor": "GARD MANGER",
+  "QR_Code": "16841"
+ },
+ {
+  "matricula": "16844",
+  "nome": "FILIPE DA MOTA VALENTE",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16844"
+ },
+ {
+  "matricula": "16856",
+  "nome": "MALENA SANTOS FERREIRA",
+  "setor": "GARD MANGER",
+  "QR_Code": "16856"
+ },
+ {
+  "matricula": "16864",
+  "nome": "SILAS DOS SANTOS",
+  "setor": "PADARIA",
+  "QR_Code": "16864"
+ },
+ {
+  "matricula": "16866",
+  "nome": "ANA PAULA DA SILVA",
+  "setor": "SUPERVISÃO",
+  "QR_Code": "16866"
+ },
+ {
+  "matricula": "16875",
+  "nome": "MARIA RITA SANTOS DE ASSIS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16875"
+ },
+ {
+  "matricula": "16891",
+  "nome": "CRISTIANO DE OLIVEIRA SILVA",
+  "setor": "AÇOUGUE",
+  "QR_Code": "16891"
+ },
+ {
+  "matricula": "16919",
+  "nome": "ALEXANDRA PEREIRA DE BARROS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16919"
+ },
+ {
+  "matricula": "16921",
+  "nome": "LUCIANO RODRIGUES BARCELLOS",
+  "setor": "COCÇÃO",
+  "QR_Code": "16921"
+ },
+ {
+  "matricula": "16922",
+  "nome": "ANTONIO DE LIMA PESSOA FILHO",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "16922"
+ },
+ {
+  "matricula": "16928",
+  "nome": "JOICE MARTINS DA SILVA OLIVEIRA",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "16928"
+ },
+ {
+  "matricula": "16930",
+  "nome": "SUZIANE SILVA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16930"
+ },
+ {
+  "matricula": "16931",
+  "nome": "ENAGER DE OLIVEIRA FERNANDES",
+  "setor": "GARD MANGER",
+  "QR_Code": "16931"
+ },
+ {
+  "matricula": "16939",
+  "nome": "REGINALDO NOGUEIRA DA SILVA",
+  "setor": "AÇOUGUE",
+  "QR_Code": "16939"
+ },
+ {
+  "matricula": "16945",
+  "nome": "RAFAELA SOARES DOS SANTOS",
+  "setor": "GARD MANGER",
+  "QR_Code": "16945"
+ },
+ {
+  "matricula": "16975",
+  "nome": "MARIA FERNANDA SAMPAIO NOGUEIRA",
+  "setor": "SUPERVISÃO",
+  "QR_Code": "16975"
+ },
+ {
+  "matricula": "16981",
+  "nome": "LAINNE SUELI OLIVEIRA LIMA",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "16981"
+ },
+ {
+  "matricula": "16994",
+  "nome": "CRISTIANE MATEUS DA SILVA",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "16994"
+ },
+ {
+  "matricula": "16995",
+  "nome": "JULIO CESAR DA SILVA DOS SANTOS",
+  "setor": "REFEITORIO",
+  "QR_Code": "16995"
+ },
+ {
+  "matricula": "16996",
+  "nome": "RACHEL DIAS CARVALHO",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "16996"
+ },
+ {
+  "matricula": "17004",
+  "nome": "JAIRO DE SOUZA REGO",
+  "setor": "COCÇÃO",
+  "QR_Code": "17004"
+ },
+ {
+  "matricula": "17007",
+  "nome": "EVELYN DA SILVA MARTINS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17007"
+ },
+ {
+  "matricula": "17020",
+  "nome": "MYLLENA DINIZ DA SILVA",
+  "setor": "GARD MANGER",
+  "QR_Code": "17020"
+ },
+ {
+  "matricula": "17024",
+  "nome": "RENAN GOMES DA CONCEICAO",
+  "setor": "AÇOUGUE",
+  "QR_Code": "17024"
+ },
+ {
+  "matricula": "17031",
+  "nome": "LEONARDO DA ROCHA",
+  "setor": "PADARIA",
+  "QR_Code": "17031"
+ },
+ {
+  "matricula": "17036",
+  "nome": "MATEUS FAUSTINO CAETANO",
+  "setor": "PADARIA",
+  "QR_Code": "17036"
+ },
+ {
+  "matricula": "17037",
+  "nome": "MIGUEL ANGELO DO NASCIMENTO PACHECO",
+  "setor": "GARD MANGER",
+  "QR_Code": "17037"
+ },
+ {
+  "matricula": "17047",
+  "nome": "REGILANE DA SILVA SANTOS",
+  "setor": "COCÇÃO",
+  "QR_Code": "17047"
+ },
+ {
+  "matricula": "17052",
+  "nome": "HOSANA RIBEIRO DA SILVA",
+  "setor": "COCÇÃO",
+  "QR_Code": "17052"
+ },
+ {
+  "matricula": "17054",
+  "nome": "JANAINA DA SILVA VILLAS",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17054"
+ },
+ {
+  "matricula": "17061",
+  "nome": "ANA BEATRIZ PEDROSO CARVALHO",
+  "setor": "COCÇÃO",
+  "QR_Code": "17061"
+ },
+ {
+  "matricula": "17066",
+  "nome": "LUCIANA MOREIRA DOS SANTOS",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17066"
+ },
+ {
+  "matricula": "17080",
+  "nome": "LARISSA DOS SANTOS RUFINO",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17080"
+ },
+ {
+  "matricula": "17081",
+  "nome": "SIMONE DE ALCANTARA GOMES",
+  "setor": "MONTAGEM FRIA",
+  "QR_Code": "17081"
+ },
+ {
+  "matricula": "17083",
+  "nome": "GERALDA DE JESUS SANTOS",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17083"
+ },
+ {
+  "matricula": "17086",
+  "nome": "KAUAN GUIMARAES COSTA",
+  "setor": "COCÇÃO",
+  "QR_Code": "17086"
+ },
+ {
+  "matricula": "17091",
+  "nome": "VITOR HUGO DE AMORIM MACHADO",
+  "setor": "COCÇÃO",
+  "QR_Code": "17091"
+ },
+ {
+  "matricula": "17094",
+  "nome": "GABRIEL NASCIMENTO RODRIGUES",
+  "setor": "PADARIA",
+  "QR_Code": "17094"
+ },
+ {
+  "matricula": "17098",
+  "nome": "KARINA DE FREITAS GOMES",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17098"
+ },
+ {
+  "matricula": "17099",
+  "nome": "NATALIA GOMES SILVA",
+  "setor": "MONTAGEM QUENTE",
+  "QR_Code": "17099"
+ },
+ {
+  "matricula": "17100",
+  "nome": "EDUARDO SOUZA DA SILVA",
+  "setor": "REFEITORIO",
+  "QR_Code": "17100"
+ },
+ {
+  "matricula": "17101",
+  "nome": "JHENEFER DA SILVA GARCIA",
+  "setor": "CONFEITARIA",
+  "QR_Code": "17101"
+ },
+ {
+  "matricula": "17102",
+  "nome": "MARCIEL DOS SANTOS LIMA",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "17102"
+ },
+ {
+  "matricula": "17103",
+  "nome": "ANA CLAUDIA FERREIRA DE MELO",
+  "setor": "CONFEITARIA",
+  "QR_Code": "17103"
+ },
+ {
+  "matricula": "17105",
+  "nome": "MARCO VINICIUS NASCIMENTO SILVA",
+  "setor": "PRE-PREPARO",
+  "QR_Code": "17105"
+ },
+ {
+  "matricula": "17107",
+  "nome": "MATHEUS DA COSTA SILVA",
+  "setor": "PADARIA",
+  "QR_Code": "17107"
+ },
+ {
+  "matricula": "17110",
+  "nome": "JONATAS LESSA REDUZINO",
+  "setor": "REFEITORIO",
+  "QR_Code": "17110"
+ },
+ {
+  "matricula": "17112",
+  "nome": "VANESSA SENA SANTOS",
+  "setor": "CONFEITARIA",
+  "QR_Code": "17112"
+ },
+ {
+  "matricula": "17118",
+  "nome": "DENILSON FERREIRA ALVES",
+  "setor": "COCÇÃO",
+  "QR_Code": "17118"
+ },
+ {
+  "matricula": "2322",
+  "nome": "ALEXSANDRO VITAL",
+  "setor": "SUPERVISÃO",
+  "QR_Code": "2322"
+ },
+ {
+  "matricula": "5907",
+  "nome": "VENCESLAU VIANA SILVA",
+  "setor": "COCÇÃO",
+  "QR_Code": "5907"
+ },
+ {
+  "matricula": "6105",
+  "nome": "CARLOS ANTONIO DE FREITAS",
+  "setor": "CONFEITARIA",
+  "QR_Code": "6105"
+ },
+ {
+  "matricula": 999999,
+  "nome": "Teste QA",
+  "QR_Code": 999999
+ }
+  ]
+}
