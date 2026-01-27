@@ -520,8 +520,7 @@ function parseCrachaData(raw){
   if (justDigits && /^\d+$/.test(justDigits)) { return { matricula: justDigits, nome: '' }; }
   try{ const o = JSON.parse(txt); return { matricula: o.matricula ? String(o.matricula) : '', nome: o.nome || '' }; }catch(e){}
   const r1 = txt.match(/^\s*(\d+)\s*[|;,	]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
-  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^
-]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
+  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
   return { matricula:'', nome: txt };
 }
 </script>
