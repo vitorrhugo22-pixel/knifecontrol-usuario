@@ -662,7 +662,6 @@ async function identificarManual(context){
   setTimeout(()=>{ const st=document.getElementById('scanStatus-'+context); if(st) st.classList.add('hidden'); },1800);
 }
 
-<script>
 function parseCrachaData(raw){
   const txt = String(raw || '').trim();
 
@@ -692,7 +691,6 @@ function parseCrachaData(raw){
   // 5) Caso contrário, considere nome puro (e matrícula em branco)
   return { matricula: '', nome: txt };
 }
-</script>
 
 </script>
 
