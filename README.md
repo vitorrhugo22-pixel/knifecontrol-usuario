@@ -1,2 +1,1 @@
-# KnifeControl — Final com GViz + patches + planilha.json real
-
+Build com correções aplicadas
