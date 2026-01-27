@@ -661,16 +661,39 @@ async function identificarManual(context){
   updateScanStatus(context,'✅ Funcionário identificado','active');
   setTimeout(()=>{ const st=document.getElementById('scanStatus-'+context); if(st) st.classList.add('hidden'); },1800);
 }
+
+<script>
 function parseCrachaData(raw){
   const txt = String(raw || '').trim();
+
+  // 1) Se for só dígitos → matrícula
   const justDigits = txt.replace(/\D+/g, '');
-  if (justDigits && /^\d+$/.test(justDigits)) { return { matricula: justDigits, nome: '' }; }
-  try{ const o = JSON.parse(txt); return { matricula: o.matricula ? String(o.matricula) : '', nome: o.nome || '' }; }catch(e){}
-  const r1 = txt.match(/^\s*(\d+)\s*[|;,	]\s*(.+)\s*$/); if(r1) return { matricula:r1[1], nome:r1[2] };
-  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*(nome)[:=]\s*([^
-]+)/i); if(r2) return { matricula:r2[1], nome:r2[3] };
-  return { matricula:'', nome: txt };
+  if (justDigits && /^\d+$/.test(justDigits)) {
+    return { matricula: justDigits, nome: '' };
+  }
+
+  // 2) Tenta JSON: {"matricula":"123","nome":"Fulano"}
+  try {
+    const o = JSON.parse(txt);
+    return {
+      matricula: o.matricula ? String(o.matricula) : '',
+      nome: o.nome || ''
+    };
+  } catch(e) {}
+
+  // 3) Formato "12345|FULANO" ou "12345;FULANO" ou "12345,FULANO" ou com TAB
+  const r1 = txt.match(/^\s*(\d+)\s*[|;,\t]\s*(.+)\s*$/);
+  if (r1) return { matricula: r1[1], nome: r1[2] };
+
+  // 4) Formato "Matrícula: 123 ... Nome: Fulano"
+  const r2 = txt.match(/matr[ií]cula[:=]\s*(\d+).*?(?:nome)[:=]\s*([^\n]+)/i);
+  if (r2) return { matricula: r2[1], nome: r2[2] };
+
+  // 5) Caso contrário, considere nome puro (e matrícula em branco)
+  return { matricula: '', nome: txt };
 }
+</script>
+
 </script>
 
 </body>
