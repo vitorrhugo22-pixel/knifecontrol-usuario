@@ -12,6 +12,10 @@
     .app-header img { height: 50px; width: auto; display: block; margin: 0 auto; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
+    .hint { font-size: 0.75rem; color: #6b7280; }
+    .badge { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:9999px; font-size:12px; }
+    .badge-green { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+    .badge-red { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -37,7 +41,7 @@
           </div>
           <div>
             <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">Senha do setor</label>
-            <input type="password" id="senha" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite a senha do setor"/>
+            <input type="password" id="senha" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite a senha do setor"/>
           </div>
           <div id="connectionStatus" class="text-center text-sm text-blue-600">📄 Aguardando planilha.json...</div>
           <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 shadow-lg">
@@ -66,17 +70,17 @@
         <button onclick="showScreen('retiradaScreen')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📤</div>
           <div class="text-xl font-bold">Retirada de Objeto</div>
-          <div class="text-sm opacity-90 mt-1">Registrar retirada (marca como <b>Em Uso</b>)</div>
+          <div class="text-sm opacity-90 mt-1">Retirar objeto existente do setor (marca como <b>Em Uso</b>)</div>
         </button>
         <button onclick="showScreen('devolucaoScreen')" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📥</div>
           <div class="text-xl font-bold">Devolução de Objeto</div>
-          <div class="text-sm opacity-90 mt-1">Registrar devolução (marca como <b>Devolvido</b>)</div>
+          <div class="text-sm opacity-90 mt-1">Listar e devolver apenas objetos do setor que estão <b>Em Uso</b></div>
         </button>
         <button onclick="showScreen('inventarioScreen')" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📋</div>
           <div class="text-xl font-bold">Inventário de Fim de Turno</div>
-          <div class="text-sm opacity-90 mt-1">Exibe quem retirou e quando; envia status (Devolvido/Em Uso)</div>
+          <div class="text-sm opacity-90 mt-1">Todos os objetos do setor com status atual; só é possível finalizar se <b>todos</b> estiverem Devolvidos</div>
         </button>
         <button onclick="logout()" class="w-full bg-gray-200 text-gray-700 p-4 rounded-xl hover:bg-gray-300 transition duration-300 mt-4">
           <div class="text-sm font-semibold">🚪 Sair</div>
@@ -105,12 +109,11 @@
 
         <div id="objetoSelectionRetirada" class="hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o Objeto:</label>
-          <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-3">
+          <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4">
             <option value="">Selecione um objeto...</option>
           </select>
-          <div class="text-xs text-gray-500 mb-3">Se não encontrar na lista, digite abaixo:</div>
-          <input type="text" id="objetoRetiradaManual" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Nome do objeto" />
-          <button onclick="confirmarRetirada()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Confirmar Retirada</button>
+          <p class="hint">* Apenas objetos existentes do setor</p>
+          <button onclick="confirmarRetirada()" class="mt-3 w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Confirmar Retirada</button>
         </div>
 
         <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
@@ -126,17 +129,12 @@
           <span class="mr-2">📥</span> Devolução de Objeto
         </h2>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Objeto</label>
-          <input id="objetoDevolucao" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Faca 01" />
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula (opcional)</label>
-          <input id="matriculaDevolucao" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Se disponível" />
-        </div>
+        <!-- Lista apenas de objetos EM USO do setor atual -->
+        <div id="listaDevolucao" class="space-y-2"></div>
+        <p id="msgSemEmUso" class="hidden text-sm text-gray-500">Não há objetos em uso neste setor.</p>
+        <button id="btnConfirmaDevolucao" onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 mt-3 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed" disabled>Confirmar Devolução</button>
 
-        <button onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duração-300">Confirmar Devolução</button>
-        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duração-300 mt-4">← Voltar ao Menu</button>
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
     </div>
   </div>
@@ -162,10 +160,11 @@
         <div id="statusObjetosInventario" class="hidden mb-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-3">Status dos Objetos do Setor:</h3>
           <div id="listaObjetosInventario" class="space-y-2"></div>
+          <div id="inventarioAviso" class="mt-2"></div>
         </div>
 
         <div id="inventarioActions" class="hidden">
-          <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">Finalizar Inventário</button>
+          <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed">Finalizar Inventário</button>
         </div>
 
         <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
@@ -201,16 +200,18 @@
 
   // ============ PLANILHA.JSON ============
   const PLANILHA_URL = 'planilha.json';
-  let PLANILHA = { setores: [], objetosPorSetor: {}, funcionarios: [], senhas: {} };
+  // Estrutura esperada: { setores:[...], setoresSenha:{setor:senha}, objetos:{setor:[...]}, funcionarios:[{matricula,nome,setor}] }
+  let PLANILHA = { setores: [], setoresSenha: {}, objetos: {}, funcionarios: [] };
 
   // ============ STATUS ATUAL (Sheets de Respostas) ============
   const DEFAULT_SHEET_ID = '1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE';
   const DEFAULT_SHEET_TAB = 'Respostas ao formulário 3';
-  let statusPorObjeto = {};
+  let statusPorObjeto = {}; // { [objeto]: {status, nome, matricula, data: Date} }
 
   // ============ ESTADO ============
   let currentSetor = '';
   let currentFuncionario = null;
+  let objetoSelecionadoDevolucao = null;
 
   // ============ TOAST ============
   function showToast(message, type='success'){
@@ -221,7 +222,7 @@
     toastContent.className=`rounded-xl shadow-2xl p-4 text-white ${bg}`;
     toastContent.innerHTML=`<div class="flex items-center space-x-3"><div class="text-2xl">${icon}</div><div class="flex-1 font-semibold">${message}</div></div>`;
     toast.classList.remove('hidden');
-    setTimeout(()=>toast.classList.add('hidden'),3000);
+    setTimeout(()=>toast.classList.add('hidden'),3200);
   }
 
   // ============ LOAD PLANILHA ============
@@ -231,16 +232,16 @@
       if (!res.ok) throw new Error('planilha.json não encontrado');
       const j = await res.json();
       PLANILHA.setores = Array.isArray(j.setores) ? j.setores : [];
-      PLANILHA.objetosPorSetor = (j.objetosPorSetor && typeof j.objetosPorSetor === 'object') ? j.objetosPorSetor : {};
+      PLANILHA.setoresSenha = (j.setoresSenha && typeof j.setoresSenha==='object') ? j.setoresSenha : {};
+      PLANILHA.objetos = (j.objetos && typeof j.objetos === 'object') ? j.objetos : {};
       PLANILHA.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
-      PLANILHA.senhas = (j.senhas && typeof j.senhas==='object') ? j.senhas : {};
-      document.getElementById('connectionStatus').className='text-center text-sm text-green-600';
-      document.getElementById('connectionStatus').textContent='📄 planilha.json carregado e conectado';
+      document.getElementById('connectionStatus').className='text-center text-sm';
+      document.getElementById('connectionStatus').innerHTML = '<span class="badge badge-green">📄 planilha.json carregado e conectado</span>';
     } catch (e) {
       console.warn('Falha ao ler planilha.json:', e);
-      PLANILHA = { setores: [], objetosPorSetor: {}, funcionarios: [], senhas:{} };
-      document.getElementById('connectionStatus').className='text-center text-sm text-red-600';
-      document.getElementById('connectionStatus').textContent='❌ planilha.json não encontrado';
+      PLANILHA = { setores: [], setoresSenha: {}, objetos: {}, funcionarios: [] };
+      document.getElementById('connectionStatus').className='text-center text-sm';
+      document.getElementById('connectionStatus').innerHTML = '<span class="badge badge-red">❌ planilha.json não encontrado</span>';
     } finally {
       loadSetores();
     }
@@ -267,8 +268,8 @@
     const setor=document.getElementById('setor').value;
     const senha=document.getElementById('senha').value;
     if(!setor){ showToast('Selecione o setor','error'); return; }
-    // Valida senha por setor a partir do planilha.json
-    const senhaEsperada = PLANILHA.senhas?.[setor] || '';
+    if(!senha){ showToast('Digite a senha do setor','error'); return; }
+    const senhaEsperada = PLANILHA.setoresSenha?.[setor] || '';
     if(String(senhaEsperada) !== String(senha)){
       showToast('Senha do setor incorreta','error');
       return;
@@ -287,11 +288,13 @@
     el.classList.remove('hidden');
     el.classList.add('fade-in');
     if(id==='retiradaScreen') loadObjetosDisponiveis();
+    if(id==='devolucaoScreen') montarDevolucao();
     if(id==='inventarioScreen') prepararInventario();
   }
 
   function voltarMenu(){
     currentFuncionario=null;
+    objetoSelecionadoDevolucao=null;
     document.getElementById('matriculaRetirada').value='';
     document.getElementById('matriculaInventario').value='';
     document.getElementById('funcionarioInfoRetirada').classList.add('hidden');
@@ -307,6 +310,7 @@
   function logout(){
     currentSetor='';
     currentFuncionario=null;
+    objetoSelecionadoDevolucao=null;
     document.getElementById('senha').value='';
     document.getElementById('setor').value='';
     showScreen('loginScreen');
@@ -316,7 +320,7 @@
   function encontrarFuncionario(matricula){
     matricula = String(matricula||'').trim();
     if(!matricula) return null;
-    const f = (PLANILHA.funcionarios||[]).find(x=> String(x.matricula||'').trim()===matricula && (x.ativo!==false));
+    const f = (PLANILHA.funcionarios||[]).find(x=> String(x.matricula||'').trim()===matricula);
     return f || null;
   }
 
@@ -325,9 +329,9 @@
     const matricula = document.getElementById(inputId).value.trim();
     if(!matricula){ showToast('Digite a matrícula','error'); return; }
     const f = encontrarFuncionario(matricula);
-    if(!f){ showToast('Matrícula não encontrada ou inativa no planilha.json','error'); return; }
+    if(!f){ showToast('Matrícula não encontrada no planilha.json','error'); return; }
 
-    currentFuncionario = { id: f.matricula, nome: f.nome||'', setor: currentSetor, dataLeitura: new Date() };
+    currentFuncionario = { id: f.matricula, nome: f.nome||'', setor: f.setor||currentSetor, dataLeitura: new Date() };
 
     if(context==='retirada'){
       showFuncionarioInfoRetirada();
@@ -351,7 +355,7 @@
       <div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div>
       <label class="text-sm text-gray-700 mt-1"><strong>👤 Nome:</strong></label>
       <input id="nomeFuncionarioRetirada" class="w-full px-3 py-2 border border-green-300 rounded-lg bg-gray-100" value="${currentFuncionario.nome||''}" readonly />
-      <div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div>
+      <div><strong>🏢 Setor:</strong> ${currentSetor}</div>
     </div>`;
     const dataLeitura=currentFuncionario.dataLeitura||new Date();
     leitura.innerHTML=`<div><strong>🕐 Identificado em:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`;
@@ -366,17 +370,21 @@
       <div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div>
       <label class="text-sm text-gray-700 mt-1"><strong>👤 Nome:</strong></label>
       <input id="nomeFuncionarioInventario" class="w-full px-3 py-2 border border-green-300 rounded-lg bg-gray-100" value="${currentFuncionario.nome||''}" readonly />
-      <div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div>
+      <div><strong>🏢 Setor:</strong> ${currentSetor}</div>
     </div>`;
     const dataLeitura=currentFuncionario.dataLeitura||new Date();
     leitura.innerHTML=`<div><strong>🕐 Identificado em:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`;
   }
 
-  // ============ OBJETOS (dropdown e inventário) ============
+  // ============ OBJETOS (dropdown e devolução) ============
+  function objetosDoSetorAtual(){
+    return PLANILHA.objetos?.[currentSetor] || [];
+  }
+
   function loadObjetosDisponiveis(){
     const select=document.getElementById('objetoRetirada');
     select.innerHTML='<option value="">Selecione um objeto...</option>';
-    const lista = (PLANILHA.objetosPorSetor?.[currentSetor] || []);
+    const lista = objetosDoSetorAtual();
     lista.forEach(nome=>{
       const o=document.createElement('option');
       o.value=nome; o.textContent=nome;
@@ -384,76 +392,45 @@
     });
   }
 
-  function prepararInventario(){
-    const container=document.getElementById('listaObjetosInventario');
-    const statusDiv=document.getElementById('statusObjetosInventario');
-    const actionsDiv=document.getElementById('inventarioActions');
+  // Devolução: montar lista somente com objetos EM USO do setor
+  function montarDevolucao(){
+    const wrap = document.getElementById('listaDevolucao');
+    const btn = document.getElementById('btnConfirmaDevolucao');
+    const msg = document.getElementById('msgSemEmUso');
+    wrap.innerHTML='';
+    objetoSelecionadoDevolucao = null;
+    btn.disabled = true;
+    msg.classList.add('hidden');
 
-    container.innerHTML='';
-    const lista=(PLANILHA.objetosPorSetor?.[currentSetor] || []);
-    if(lista.length===0){
-      container.innerHTML='<p class="text-gray-500 text-center py-4">Nenhum objeto encontrado para este setor no <span class="font-mono">planilha.json</span>.</p>';
-      statusDiv.classList.remove('hidden');
-      actionsDiv.classList.add('hidden');
+    const objsSetor = new Set(objetosDoSetorAtual());
+    const emUso = Object.entries(statusPorObjeto)
+      .filter(([obj, info])=> objsSetor.has(obj) && info?.status==='Em Uso')
+      .sort((a,b)=> (a[0]||'').localeCompare(b[0]||'', 'pt-BR'));
+
+    if(emUso.length===0){
+      msg.classList.remove('hidden');
       return;
     }
-    statusDiv.classList.remove('hidden');
-    actionsDiv.classList.remove('hidden');
 
-    const novoContainer = container.cloneNode(false);
-    container.parentNode.replaceChild(novoContainer, container);
-
-    lista.forEach((nome, idx)=>{
-      const id='inv_'+idx;
-      const info = statusPorObjeto[nome];
-      const isEmUso = (info && info.status==='Em Uso');
-      const legenda = isEmUso
-        ? `<span class="text-xs text-gray-600 ml-3">— em uso por <b>${info.nome||info.matricula||'?'}</b> em ${info.data ? info.data.toLocaleString('pt-BR') : '?'}</span>`
-        : '';
-
-      const row=document.createElement('div');
-      row.className='flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+    emUso.forEach(([obj, info], idx)=>{
+      const id = 'dev_'+idx;
+      const row = document.createElement('label');
+      row.className='flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
       row.innerHTML = `
-        <div class="font-semibold text-gray-800 flex items-center">
-          <span>${nome}</span>
-          <span class="inline-block" id="aux_${id}">${legenda}</span>
-        </div>
-        <div class="flex items-center space-x-4">
-          <label class="inline-flex items-center space-x-1 text-sm">
-            <input type="radio" name="${id}" value="Devolvido" ${isEmUso ? '' : 'checked'} class="text-purple-600" />
-            <span>Devolvido</span>
-          </label>
-          <label class="inline-flex items-center space-x-1 text-sm">
-            <input type="radio" name="${id}" value="Em Uso" ${isEmUso ? 'checked' : ''} class="text-purple-600" />
-            <span>Em Uso</span>
-          </label>
+        <input type="radio" name="dev_obj" id="${id}" value="${obj}" class="mt-1.5"/>
+        <div class="flex-1">
+          <div class="font-semibold text-gray-800">${obj}</div>
+          <div class="text-xs text-gray-600">em uso por <b>${info.nome||info.matricula||'?'} </b> em ${info.data ? new Date(info.data).toLocaleString('pt-BR') : '?'}</div>
         </div>`;
-      row.dataset.objeto=nome;
-      row.dataset.group=id;
-      novoContainer.appendChild(row);
+      wrap.appendChild(row);
     });
 
-    novoContainer.addEventListener('change', (ev)=>{
-      const tgt = ev.target;
-      if(!tgt.name || !tgt.name.startsWith('inv_')) return;
-      const group = tgt.name;
-      const auxSpan = document.getElementById('aux_'+group);
-      const linha = tgt.closest('[data-objeto]');
-      const nome = linha?.dataset?.objeto || '';
-      if(!auxSpan) return;
-      if(tgt.value==='Em Uso' && tgt.checked){
-        const i = statusPorObjeto[nome];
-        if(i && i.status==='Em Uso'){
-          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso por <b>${i.nome||i.matricula||'?'}</b> em ${i.data ? i.data.toLocaleString('pt-BR') : '?'}</span>`;
-        } else if (currentFuncionario) {
-          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso por <b>${currentFuncionario.nome||currentFuncionario.id}</b> em ${new Date().toLocaleString('pt-BR')}</span>`;
-        } else {
-          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso (sem registro prévio)</span>`;
-        }
-      } else {
-        auxSpan.textContent = '';
+    wrap.addEventListener('change', (ev)=>{
+      if(ev.target && ev.target.name==='dev_obj'){
+        objetoSelecionadoDevolucao = ev.target.value;
+        btn.disabled = !objetoSelecionadoDevolucao;
       }
-    });
+    }, { once:true });
   }
 
   // ============ ENVIO AO FORMS ============
@@ -471,10 +448,14 @@
   }
 
   function confirmarRetirada(){
-    const objSel=(document.getElementById('objetoRetirada').value||'').trim();
-    const objManual=(document.getElementById('objetoRetiradaManual').value||'').trim();
-    const objeto= objManual || objSel;
-    if(!objeto){ showToast('Selecione ou digite o objeto','error'); return; }
+    const objeto=(document.getElementById('objetoRetirada').value||'').trim();
+    if(!objeto){ showToast('Selecione um objeto do dropdown','error'); return; }
+    // Validar se objeto pertence ao setor
+    const lista = objetosDoSetorAtual();
+    if(!lista.includes(objeto)){
+      showToast('Objeto inválido para este setor','error');
+      return;
+    }
     if(!currentFuncionario){ showToast('Identifique o funcionário pela matrícula','error'); return; }
     const nome=(document.getElementById('nomeFuncionarioRetirada')?.value||'').trim();
     showConfirm(`Confirma a retirada do objeto "${objeto}"?`, async ()=>{
@@ -487,7 +468,6 @@
         document.getElementById('leituraInfoRetirada').classList.add('hidden');
         document.getElementById('objetoSelectionRetirada').classList.add('hidden');
         document.getElementById('matriculaRetirada').value='';
-        document.getElementById('objetoRetiradaManual').value='';
         setTimeout(()=>showScreen('mainMenu'),800);
       }catch(err){
         showToast('Falha ao enviar ao Forms: '+err.message,'error');
@@ -496,17 +476,15 @@
   }
 
   function confirmarDevolucao(){
-    const objeto=(document.getElementById('objetoDevolucao').value||'').trim();
-    const mat=(document.getElementById('matriculaDevolucao').value||'').trim();
-    if(!objeto){ showToast('Informe o nome do objeto','error'); return; }
-    showConfirm(`Confirma a devolução do objeto "${objeto}"?`, async ()=>{
+    if(!objetoSelecionadoDevolucao){ showToast('Selecione um objeto em uso','error'); return; }
+    const info = statusPorObjeto[objetoSelecionadoDevolucao];
+    showConfirm(`Confirmar devolução do objeto "${objetoSelecionadoDevolucao}"?`, async ()=>{
       try{
-        await postToForms({ objeto, matricula: mat, funcionario: '', setor: currentSetor, status:'Devolvido' });
+        await postToForms({ objeto: objetoSelecionadoDevolucao, matricula: info?.matricula||'', funcionario: info?.nome||'', setor: currentSetor, status:'Devolvido' });
         showToast('Devolução registrada com sucesso!','success');
-        statusPorObjeto[objeto] = { status:'Devolvido', nome:'', matricula:'', data: new Date() };
-        document.getElementById('objetoDevolucao').value='';
-        document.getElementById('matriculaDevolucao').value='';
-        setTimeout(()=>showScreen('mainMenu'),800);
+        statusPorObjeto[objetoSelecionadoDevolucao] = { status:'Devolvido', nome:'', matricula:'', data: new Date() };
+        objetoSelecionadoDevolucao=null;
+        montarDevolucao(); // refaz lista
       }catch(err){
         showToast('Falha ao enviar ao Forms: '+err.message,'error');
       }
@@ -515,20 +493,20 @@
 
   async function finalizarInventario(){
     if(!currentFuncionario){ showToast('Identifique o funcionário pela matrícula','error'); return; }
+    // Verifica se ainda há algum Em Uso
+    const objs = objetosDoSetorAtual();
+    const algumEmUso = objs.some(o => statusPorObjeto[o]?.status==='Em Uso');
+    if(algumEmUso){ showToast('Há objeto(s) Em Uso. Finalização bloqueada.','error'); return; }
+
     const nome=(document.getElementById('nomeFuncionarioInventario')?.value||'').trim();
-    const linhas=Array.from(document.querySelectorAll('#listaObjetosInventario > div'));
-    if(linhas.length===0){ showToast('Nenhum objeto para inventariar','error'); return; }
-    showConfirm('Confirma a finalização do inventário e envio dos status ao Forms?', async ()=>{
+    // Envia status Devolvido para todos (confirmação final do turno)
+    showConfirm('Confirmar finalização do inventário (todos os objetos como Devolvido)?', async ()=>{
       try{
-        for(const row of linhas){
-          const objeto=row.dataset.objeto;
-          const group=row.dataset.group;
-          const checked=document.querySelector(`input[name="${group}"]:checked`);
-          const status= checked? checked.value : 'Devolvido';
-          await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status });
-          statusPorObjeto[objeto] = { status, nome: (status==='Em Uso'? nome : ''), matricula: (status==='Em Uso'? currentFuncionario.id : ''), data: new Date() };
+        for(const objeto of objs){
+          await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status: 'Devolvido' });
+          statusPorObjeto[objeto] = { status:'Devolvido', nome:'', matricula:'', data: new Date() };
         }
-        showToast('Inventário enviado com sucesso!','success');
+        showToast('Inventário finalizado e enviado!','success');
         currentFuncionario=null;
         document.getElementById('funcionarioInfoInventario').classList.add('hidden');
         document.getElementById('leituraInfoInventario').classList.add('hidden');
