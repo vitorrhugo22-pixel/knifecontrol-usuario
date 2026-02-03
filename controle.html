@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KnifeControl — Controle (Cadastro & Relatórios)</title>
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { box-sizing: border-box; }
+    .app-header { background: white; border-bottom: 2px solid #e5e7eb; padding: 8px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .app-header img { height: 50px; width: auto; display: block; margin: 0 auto; }
+    @media print {
+      #cadastroSection, #filtrosRelatorio, #topActions, #jsonActions { display: none !important; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <!-- Cabeçalho coerente com o app de usuário -->
+  <div class="app-header">
+    <img src="https://pfst.cf2.poecdn.net/base/image/b4c6aca4c7db7589b9f0de13c8ee90d92d0ff180d82b105e4e1961cae846d611?w=225&h=92" alt="LSG Sky Chefs"/>
+  </div>
+
+  <main class="max-w-6xl mx-auto p-4 space-y-6">
+    <!-- Título -->
+    <header class="bg-white rounded-2xl shadow-xl p-6">
+      <h1 class="text-3xl font-bold text-gray-800">🔧 KnifeControl — Painel de Controle</h1>
+      <p class="text-gray-600 mt-2">
+        Cadastro de Funcionários e Objetos (arquivo <b>planilha.json</b>) e Relatórios a partir da Planilha de Respostas do Google Forms — sem Apps Script.
+      </p>
+    </header>
+
+    <!-- Abas simples -->
+    <div class="flex gap-2" id="topActions">
+      <button id="tabCadastro" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Cadastro</button>
+      <button id="tabRelatorios" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300">Relatórios</button>
+    </div>
+
+    <!-- ========== CADASTRO ========== -->
+    <section id="cadastroSection" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Carregar/Salvar JSON -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-3">📁 Arquivo JSON</h2>
+          <div id="jsonActions" class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Carregar planilha.json</label>
+              <input id="fileInput" type="file" accept="application/json" class="w-full border border-gray-300 rounded-lg p-2"/>
+            </div>
+            <div class="flex gap-2">
+              <button id="btnBaixarJson" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Baixar planilha.json</button>
+              <button id="btnResetJson" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700">Reset (modelo)</button>
+            </div>
+            <p class="text-xs text-gray-500">* Baixe o JSON atualizado e substitua no servidor/hosting.</p>
+          </div>
+        </div>
+
+        <!-- Setores -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-3">🏢 Setores</h2>
+          <div class="flex gap-2 mb-3">
+            <input id="novoSetor" class="flex-1 border border-gray-300 rounded-lg px-3 py-2" placeholder="Nome do setor"/>
+            <button id="btnAddSetor" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
+          </div>
+          <ul id="listaSetores" class="space-y-2 max-h-72 overflow-auto"></ul>
+        </div>
+
+        <!-- Objetos por Setor -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-3">🔪 Objetos por Setor</h2>
+          <div class="grid grid-cols-1 gap-2 mb-3">
+            <select id="setorObjeto" class="border border-gray-300 rounded-lg px-3 py-2"></select>
+            <div class="flex gap-2">
+              <input id="novoObjeto" class="flex-1 border border-gray-300 rounded-lg px-3 py-2" placeholder='Ex.: "60 – FACA"'/>
+              <button id="btnAddObjeto" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
+            </div>
+          </div>
+          <div id="listaObjetosWrap" class="border border-gray-200 rounded-xl p-3 max-h-64 overflow-auto">
+            <ul id="listaObjetos" class="space-y-1 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Funcionários -->
+      <div class="bg-white rounded-2xl shadow-xl p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">👥 Funcionários</h2>
+        <div class="grid md:grid-cols-4 gap-2 mb-3">
+          <input id="funcMatricula" class="border border-gray-300 rounded-lg px-3 py-2" placeholder="Matrícula"/>
+          <input id="funcNome" class="border border-gray-300 rounded-lg px-3 py-2" placeholder="Nome"/>
+          <select id="funcSetor" class="border border-gray-300 rounded-lg px-3 py-2"></select>
+          <button id="btnAddFuncionario" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
+        </div>
+
+        <div class="overflow-auto">
+          <table class="min-w-full border border-gray-200 rounded-xl overflow-hidden">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-3 border-b">Matrícula</th>
+                <th class="text-left p-3 border-b">Nome</th>
+                <th class="text-left p-3 border-b">Setor</th>
+                <th class="text-left p-3 border-b">Ativo</th>
+                <th class="text-left p-3 border-b">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyFuncionarios" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== RELATÓRIOS ========== -->
+    <section id="relatoriosSection" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-xl p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">📊 Relatórios (Google Sheets do Forms)</h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Publique a guia de respostas em <b>Arquivo → Publicar na Web</b> e informe os dados abaixo.
+        </p>
+        <div id="filtrosRelatorio" class="grid md:grid-cols-5 gap-3">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">ID da Planilha</label>
+            <input id="sheetId" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="1AbCdef..."/>
+          </div>
+          <div class="">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Guia (aba)</label>
+            <input id="sheetTab" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Respostas ao formulário 1"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Período: De</label>
+            <input id="dataIni" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Até</label>
+            <input id="dataFim" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Setor</label>
+            <select id="fSetor" class="w-full border border-gray-300 rounded-lg px-3 py-2"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Objeto</label>
+            <input id="fObjeto" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="(opcional)"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
+            <input id="fMatricula" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="(opcional)"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select id="fStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+              <option value="">Todos</option>
+              <option>Em Uso</option>
+              <option>Devolvido</option>
+            </select>
+          </div>
+          <div class="flex items-end gap-2">
+            <button id="btnCarregar" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Carregar</button>
+            <button id="btnLimpar" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Limpar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="grid md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
+          <div class="text-2xl">🧾</div>
+          <div class="text-sm text-gray-500">Registros</div>
+          <div id="kpiRegistros" class="text-3xl font-bold">0</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
+          <div class="text-2xl">📤</div>
+          <div class="text-sm text-gray-500">Retiradas</div>
+          <div id="kpiRetiradas" class="text-3xl font-bold">0</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
+          <div class="text-2xl">📥</div>
+          <div class="text-sm text-gray-500">Devoluções</div>
+          <div id="kpiDevolucoes" class="text-3xl font-bold">0</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
+          <div class="text-2xl">⏱️</div>
+          <div class="text-sm text-gray-500">Em uso (status mais recente por objeto)</div>
+          <div id="kpiEmUso" class="text-3xl font-bold">0</div>
+        </div>
+      </div>
+
+      <!-- Tabela + ações -->
+      <div class="bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button id="btnExportCsv" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">Exportar CSV</button>
+          <button id="btnImprimir" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700">Imprimir / PDF</button>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full border border-gray-200 rounded-xl overflow-hidden">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-3 border-b">Data/Hora</th>
+                <th class="text-left p-3 border-b">Setor</th>
+                <th class="text-left p-3 border-b">Objeto</th>
+                <th class="text-left p-3 border-b">Matrícula</th>
+                <th class="text-left p-3 border-b">Funcionário</th>
+                <th class="text-left p-3 border-b">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyRelatorio" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast simples -->
+  <div id="toast" class="hidden fixed top-20 right-4 z-50 max-w-sm">
+    <div id="toastContent" class="rounded-xl shadow-2xl p-4 transform transition-all"></div>
+  </div>
+
+  <script>
+    // ====== Configuração padrão do relatório (preenchido com os dados que você passou) ======
+    const DEFAULT_SHEET_ID = '1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE';
+    const DEFAULT_SHEET_TAB = 'Respostas ao formulário 3';
+
+    // ====== Estado ======
+    let dados = { setores: [], objetosPorSetor: {}, funcionarios: [] };
+    let registros = []; // dados dos relatórios
+
+    // ====== UI helpers ======
+    function showToast(message, type='success') {
+      const toast=document.getElementById('toast');
+      const toastContent=document.getElementById('toastContent');
+      const bg = type==='success'?'bg-green-500':'bg-red-500';
+      const icon = type==='success'?'✅':'❌';
+      toastContent.className = `rounded-xl shadow-2xl p-4 text-white ${bg}`;
+      toastContent.innerHTML = `<div class="flex items-center gap-3"><div class="text-2xl">${icon}</div><div class="font-semibold">${message}</div></div>`;
+      toast.classList.remove('hidden');
+      setTimeout(()=>toast.classList.add('hidden'),3000);
+    }
+
+    function renderSetores() {
+      const ul = document.getElementById('listaSetores');
+      const sel1 = document.getElementById('setorObjeto');
+      const sel2 = document.getElementById('funcSetor');
+      const sel3 = document.getElementById('fSetor');
+
+      ul.innerHTML = '';
+      sel1.innerHTML = '';
+      sel2.innerHTML = '';
+      sel3.innerHTML = '<option value="">Todos</option>';
+
+      dados.setores.forEach(s => {
+        // lista
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between border border-gray-200 rounded-lg p-2';
+        li.innerHTML = `
+          <div class="font-semibold text-gray-800">${s}</div>
+          <div class="flex gap-2">
+            <button data-action="renomear" data-setor="${s}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Renomear</button>
+            <button data-action="remover" data-setor="${s}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
+          </div>`;
+        ul.appendChild(li);
+        // selects
+        const o1 = new Option(s, s); sel1.add(o1);
+        const o2 = new Option(s, s); sel2.add(o2);
+        const o3 = new Option(s, s); sel3.add(o3);
+      });
+
+      ul.onclick = (ev) => {
+        const btn = ev.target.closest('button'); if (!btn) return;
+        const setor = btn.dataset.setor; const action = btn.dataset.action;
+        if (action==='remover') {
+          if (!confirm(`Remover setor "${setor}"?`)) return;
+          dados.setores = dados.setores.filter(x => x!==setor);
+          delete dados.objetosPorSetor[setor];
+          dados.funcionarios.forEach(f=>{ if (f.setor===setor) f.setor=''; });
+          renderSetores(); renderObjetos(); renderFuncionarios();
+        } else if (action==='renomear') {
+          const novo = prompt('Novo nome do setor:', setor);
+          if (!novo || novo===setor) return;
+          if (dados.setores.includes(novo)) { showToast('Já existe um setor com esse nome','error'); return; }
+          dados.setores = dados.setores.map(x => x===setor ? novo : x);
+          dados.objetosPorSetor[novo] = (dados.objetosPorSetor[setor]||[]).slice();
+          delete dados.objetosPorSetor[setor];
+          dados.funcionarios.forEach(f=>{ if (f.setor===setor) f.setor=novo; });
+          renderSetores(); renderObjetos(); renderFuncionarios();
+        }
+      };
+    }
+
+    function renderObjetos() {
+      const lista = document.getElementById('listaObjetos');
+      const setor = document.getElementById('setorObjeto').value || dados.setores[0] || '';
+      lista.innerHTML = '';
+      if (!setor) return;
+      const itens = (dados.objetosPorSetor[setor] || []).slice().sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      itens.forEach(nome=>{
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between';
+        li.innerHTML = `<span class="text-gray-800">${nome}</span>
+          <div class="flex gap-2">
+            <button data-action="renomear" data-obj="${nome}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Renomear</button>
+            <button data-action="remover" data-obj="${nome}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
+          </div>`;
+        lista.appendChild(li);
+      });
+
+      lista.onclick = (ev)=>{
+        const btn = ev.target.closest('button'); if (!btn) return;
+        const obj = btn.dataset.obj; const action = btn.dataset.action;
+        if (action==='remover') {
+          if (!confirm(`Remover objeto "${obj}" do setor "${setor}"?`)) return;
+          dados.objetosPorSetor[setor] = (dados.objetosPorSetor[setor]||[]).filter(x=>x!==obj);
+          renderObjetos();
+        } else if (action==='renomear') {
+          const novo = prompt('Novo nome do objeto:', obj);
+          if (!novo || novo===obj) return;
+          const arr = dados.objetosPorSetor[setor]||[];
+          if (arr.includes(novo)) { showToast('Já existe um objeto com esse nome','error'); return; }
+          dados.objetosPorSetor[setor] = arr.map(x=>x===obj?novo:x);
+          renderObjetos();
+        }
+      };
+    }
+
+    function renderFuncionarios() {
+      const tb = document.getElementById('tbodyFuncionarios');
+      tb.innerHTML = '';
+      const arr = dados.funcionarios.slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+      arr.forEach(f=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3">${f.matricula||''}</td>
+          <td class="p-3">${f.nome||''}</td>
+          <td class="p-3">${f.setor||''}</td>
+          <td class="p-3">${f.ativo ? 'Sim' : 'Não'}</td>
+          <td class="p-3 space-x-2">
+            <button data-action="editar" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Editar</button>
+            <button data-action="toggle" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600">${f.ativo?'Desativar':'Ativar'}</button>
+            <button data-action="remover" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
+          </td>
+        `;
+        tb.appendChild(tr);
+      });
+
+      tb.onclick = (ev)=>{
+        const btn = ev.target.closest('button'); if (!btn) return;
+        const id = btn.dataset.id; const action = btn.dataset.action;
+        const idx = dados.funcionarios.findIndex(x=>x.matricula===id);
+        if (idx<0) return;
+        if (action==='remover') {
+          if (!confirm('Remover funcionário?')) return;
+          dados.funcionarios.splice(idx,1);
+          renderFuncionarios();
+        } else if (action==='toggle') {
+          dados.funcionarios[idx].ativo = !dados.funcionarios[idx].ativo;
+          renderFuncionarios();
+        } else if (action==='editar') {
+          const obj = dados.funcionarios[idx];
+          const nome = prompt('Nome:', obj.nome||''); if (nome===null) return;
+          const matricula = prompt('Matrícula:', obj.matricula||''); if (matricula===null) return;
+          const setor = prompt('Setor (deixe vazio p/ sem vínculo):', obj.setor||''); if (setor===null) return;
+          obj.nome = (nome||'').trim(); obj.matricula = (matricula||'').trim(); obj.setor = (setor||'').trim();
+          renderFuncionarios();
+        }
+      };
+    }
+
+    // ====== JSON load/save ======
+    async function carregarJsonInicial() {
+      try {
+        const res = await fetch('planilha.json', {cache:'no-store'});
+        if (!res.ok) throw new Error('Não encontrado');
+        const j = await res.json();
+        // validações simples:
+        dados.setores = Array.isArray(j.setores) ? j.setores : [];
+        dados.objetosPorSetor = typeof j.objetosPorSetor==='object' && j.objetosPorSetor ? j.objetosPorSetor : {};
+        dados.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
+        renderSetores(); renderObjetos(); renderFuncionarios();
+      } catch(e) {
+        // carrega modelo vazio coerente com seu index atual
+        dados = { setores: [], objetosPorSetor: {}, funcionarios: [] };
+        renderSetores(); renderObjetos(); renderFuncionarios();
+        showToast('planilha.json não encontrado — usando modelo vazio. Você pode carregar um arquivo ou começar do zero.');
+      }
+    }
+
+    function baixarJson() {
+      const blob = new Blob([JSON.stringify(dados, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'planilha.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById('fileInput').addEventListener('change', async (ev)=>{
+      const file = ev.target.files[0]; if (!file) return;
+      try {
+        const text = await file.text();
+        const j = JSON.parse(text);
+        dados.setores = Array.isArray(j.setores) ? j.setores : [];
+        dados.objetosPorSetor = typeof j.objetosPorSetor==='object' && j.objetosPorSetor ? j.objetosPorSetor : {};
+        dados.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
+        renderSetores(); renderObjetos(); renderFuncionarios();
+        showToast('planilha.json carregado');
+      } catch(e) {
+        showToast('JSON inválido','error');
+      } finally {
+        ev.target.value = '';
+      }
+    });
+
+    document.getElementById('btnBaixarJson').onclick = baixarJson;
+    document.getElementById('btnResetJson').onclick = ()=>{ dados={setores:[],objetosPorSetor:{},funcionarios:[]}; renderSetores(); renderObjetos(); renderFuncionarios(); showToast('Modelo vazio carregado'); };
+
+    // ====== Ações de Cadastro ======
+    document.getElementById('btnAddSetor').onclick = ()=>{
+      const nome = (document.getElementById('novoSetor').value||'').trim();
+      if (!nome) return;
+      if (dados.setores.includes(nome)) { showToast('Setor já existe','error'); return; }
+      dados.setores.push(nome);
+      dados.objetosPorSetor[nome] = dados.objetosPorSetor[nome]||[];
+      document.getElementById('novoSetor').value='';
+      renderSetores(); renderObjetos();
+    };
+
+    document.getElementById('setorObjeto').addEventListener('change', renderObjetos);
+
+    document.getElementById('btnAddObjeto').onclick = ()=>{
+      const setor = document.getElementById('setorObjeto').value;
+      const nome = (document.getElementById('novoObjeto').value||'').trim();
+      if (!setor || !nome) return;
+      const arr = dados.objetosPorSetor[setor] = (dados.objetosPorSetor[setor]||[]);
+      if (arr.includes(nome)) { showToast('Objeto já existe nesse setor','error'); return; }
+      arr.push(nome);
+      document.getElementById('novoObjeto').value='';
+      renderObjetos();
+    };
+
+    document.getElementById('btnAddFuncionario').onclick = ()=>{
+      const matricula = (document.getElementById('funcMatricula').value||'').trim();
+      const nome = (document.getElementById('funcNome').value||'').trim();
+      const setor = (document.getElementById('funcSetor').value||'').trim();
+      if (!matricula || !nome) { showToast('Preencha matrícula e nome','error'); return; }
+      if (dados.funcionarios.some(f=>f.matricula===matricula)) { showToast('Matrícula já existe','error'); return; }
+      dados.funcionarios.push({matricula, nome, setor, ativo:true});
+      document.getElementById('funcMatricula').value='';
+      document.getElementById('funcNome').value='';
+      renderFuncionarios();
+    };
+
+    // ====== Abas ======
+    document.getElementById('tabCadastro').onclick = ()=>{
+      document.getElementById('tabCadastro').className='px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700';
+      document.getElementById('tabRelatorios').className='px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300';
+      document.getElementById('cadastroSection').classList.remove('hidden');
+      document.getElementById('relatoriosSection').classList.add('hidden');
+    };
+    document.getElementById('tabRelatorios').onclick = ()=>{
+      document.getElementById('tabRelatorios').className='px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700';
+      document.getElementById('tabCadastro').className='px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300';
+      document.getElementById('cadastroSection').classList.add('hidden');
+      document.getElementById('relatoriosSection').classList.remove('hidden');
+    };
+
+    // ====== Relatórios: CSV & filtros ======
+    function csvToRows(text) {
+      const rows = [];
+      let i=0, cur=[], field='', inQuotes=false;
+      while (i<text.length) {
+        const c = text[i];
+        if (c === '"') {
+          if (inQuotes && text[i+1]==='"') { field+='"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (c === ',' && !inQuotes) {
+          cur.push(field); field='';
+        } else if ((c === '\n' || c === '\r') && !inQuotes) {
+          if (field !== '' || cur.length>0) { cur.push(field); rows.push(cur); cur=[]; field=''; }
+        } else {
+          field += c;
+        }
+        i++;
+      }
+      if (field!=='' || cur.length>0) { cur.push(field); rows.push(cur); }
+      return rows.filter(r=>r.length>1 || (r.length===1 && r[0].trim()!==''));
+    }
+
+    function normalizarHeader(h) { return (h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+    function mapearColunas(headers) {
+      const idx = {};
+      headers.forEach((h,i)=>{
+        const n = normalizarHeader(h);
+        if (n.includes('objeto')) idx.objeto = i;
+        else if (n.includes('matric')) idx.matricula = i;
+        else if (n.includes('funcion')) idx.funcionario = i;
+        else if (n.includes('setor')) idx.setor = i;
+        else if (n.includes('timestamp') || n.includes('data') || n.includes('hora')) idx.timestamp = i;
+        else if (n.includes('em uso')) idx.emUso = i;
+        else if (n.includes('devolvido')) idx.devolvido = i;
+        else if (n==='status') idx.status = i;
+      });
+      return idx;
+    }
+
+    function aplicarFiltros(base) {
+      const fSetor = document.getElementById('fSetor').value;
+      const fObjeto = document.getElementById('fObjeto').value.trim().toLowerCase();
+      const fMatricula = document.getElementById('fMatricula').value.trim().toLowerCase();
+      const fStatus = document.getElementById('fStatus').value;
+      const di = document.getElementById('dataIni').value ? new Date(document.getElementById('dataIni').value+'T00:00:00') : null;
+      const df = document.getElementById('dataFim').value ? new Date(document.getElementById('dataFim').value+'T23:59:59') : null;
+
+      return base.filter(r=>{
+        if (fSetor && r.setor!==fSetor) return false;
+        if (fObjeto && !String(r.objeto||'').toLowerCase().includes(fObjeto)) return false;
+        if (fMatricula && !String(r.matricula||'').toLowerCase().includes(fMatricula)) return false;
+        if (fStatus && r.status!==fStatus) return false;
+        if (di && r.data && r.data < di) return false;
+        if (df && r.data && r.data > df) return false;
+        return true;
+      });
+    }
+
+    function renderTabela(rows) {
+      const tb = document.getElementById('tbodyRelatorio');
+      tb.innerHTML = '';
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3">${r.data ? r.data.toLocaleString('pt-BR') : ''}</td>
+          <td class="p-3">${r.setor||''}</td>
+          <td class="p-3">${r.objeto||''}</td>
+          <td class="p-3">${r.matricula||''}</td>
+          <td class="p-3">${r.funcionario||''}</td>
+          <td class="p-3">${r.status||''}</td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    function atualizarKpis(rows) {
+      const total = rows.length;
+      const retiradas = rows.filter(r=>r.status==='Em Uso').length;
+      const dev = rows.filter(r=>r.status==='Devolvido').length;
+
+      // status mais recente por objeto
+      const porObj = new Map();
+      rows.forEach(r=>{
+        const k = r.objeto||'';
+        if (!k) return;
+        const cur = porObj.get(k);
+        if (!cur || (r.data && cur.data && r.data > cur.data) || (r.data && !cur.data)) porObj.set(k, r);
+      });
+      let emUsoAtuais = 0;
+      porObj.forEach(v=>{ if (v.status==='Em Uso') emUsoAtuais++; });
+
+      document.getElementById('kpiRegistros').textContent = total;
+      document.getElementById('kpiRetiradas').textContent = retiradas;
+      document.getElementById('kpiDevolucoes').textContent = dev;
+      document.getElementById('kpiEmUso').textContent = emUsoAtuais;
+    }
+
+    async function carregarRegistros() {
+      const id = (document.getElementById('sheetId').value||'').trim();
+      const tab = (document.getElementById('sheetTab').value||'').trim();
+      if (!id || !tab) { showToast('Informe ID e Guia da planilha','error'); return; }
+      const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Não foi possível ler a planilha (publique a aba)');
+        const text = await res.text();
+        const rows = csvToRows(text);
+        if (!rows.length) { showToast('Sem dados','error'); return; }
+        const headers = rows[0];
+        const idx = mapearColunas(headers);
+        registros = rows.slice(1).map(r=>{
+          const rawData = (r[idx.timestamp]||'').trim();
+          let data=null; if (rawData) {
+            const d1 = new Date(rawData);
+            data = isNaN(d1)? null : d1;
+          }
+          let status = '';
+          const vEmUso = idx.emUso!=null ? (r[idx.emUso]||'').toString().toLowerCase() : '';
+          const vDevolvido = idx.devolvido!=null ? (r[idx.devolvido]||'').toString().toLowerCase() : '';
+          if (idx.status!=null) status = (r[idx.status]||'').trim();
+          else if (vEmUso.includes('em uso') || vEmUso==='true' || vEmUso==='1' || vEmUso==='x') status = 'Em Uso';
+          else if (vDevolvido.includes('devolvido') || vDevolvido==='true' || vDevolvido==='1' || vDevolvido==='x') status = 'Devolvido';
+          return {
+            data,
+            setor: idx.setor!=null ? r[idx.setor] : '',
+            objeto: idx.objeto!=null ? r[idx.objeto] : '',
+            matricula: idx.matricula!=null ? r[idx.matricula] : '',
+            funcionario: idx.funcionario!=null ? r[idx.funcionario] : '',
+            status
+          };
+        }).filter(x=>x.objeto || x.matricula || x.funcionario || x.setor || x.status);
+
+        const filtrados = aplicarFiltros(registros);
+        renderTabela(filtrados);
+        atualizarKpis(filtrados);
+        showToast('Registros carregados');
+      } catch (e) {
+        console.error(e);
+        showToast('Falha ao carregar: ' + e.message, 'error');
+      }
+    }
+
+    function exportCsv() {
+      const tb = document.getElementById('tbodyRelatorio');
+      const rows = [['Timestamp','Setor','Objeto','Matrícula','Funcionário','Status']];
+      Array.from(tb.querySelectorAll('tr')).forEach(tr=>{
+        const tds = tr.querySelectorAll('td');
+        rows.push(Array.from(tds).map(td=> (td.textContent||'').replace(/\s+/g,' ').trim() ));
+      });
+      const csv = rows.map(r=> r.map(v=>{
+        const s = String(v).replace(/"/g,'""');
+        return `"${s}"`;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'relatorio_knifecolor.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById('btnImprimir').onclick = ()=>window.print();
+
+    // ====== Eventos Relatórios ======
+    document.getElementById('btnCarregar').onclick = carregarRegistros;
+    document.getElementById('btnLimpar').onclick = ()=>{
+      document.getElementById('dataIni').value='';
+      document.getElementById('dataFim').value='';
+      document.getElementById('fSetor').value='';
+      document.getElementById('fObjeto').value='';
+      document.getElementById('fMatricula').value='';
+      document.getElementById('fStatus').value='';
+      const filtrados = aplicarFiltros(registros);
+      renderTabela(filtrados); atualizarKpis(filtrados);
+    };
+    document.getElementById('btnExportCsv').onclick = exportCsv;
+
+    // ====== Boot ======
+    window.addEventListener('DOMContentLoaded', ()=>{
+      // JSON
+      carregarJsonInicial();
+      // Predefine a planilha de relatórios
+      document.getElementById('sheetId').value = DEFAULT_SHEET_ID;
+      document.getElementById('sheetTab').value = DEFAULT_SHEET_TAB;
+    });
+
+  </script>
+</body>
+</html>

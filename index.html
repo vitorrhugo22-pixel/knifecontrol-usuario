@@ -4,187 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>KnifeControl Usuário — Fallback Google Forms</title>
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGD4DwAB4gF/2cPq7QAAAABJRU5ErkJggg=="/>
+  <link rel="icon" type="image/png" href="https://pfst.cf2.poecdn.net/base/image/66a86ff2e9d405ae0301524bd658a3243a0dd6b3e9b05bb2cf53c4d11af08062?w=71&h=69"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { box-sizing: border-box; margin:0; padding:0; }
-    .fade-in { animation: fadeIn .25s ease-in; }
-    @keyframes fadeIn { from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:translateY(0)} }
+    body { box-sizing: border-box; margin: 0; padding: 0; }
+    .app-header { background: white; border-bottom: 2px solid #e5e7eb; padding: 8px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .app-header img { height: 50px; width: auto; display: block; margin: 0 auto; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
   </style>
 </head>
 <body class="bg-gray-100">
-  <!-- Header -->
-  <div class="bg-white border-b border-gray-200 sticky top-0 z-40">
-    <div class="max-w-3xl mx-auto px-4 py-3">
-      <h1 class="text-xl md:text-2xl font-bold text-gray-800">🔪 KnifeControl — Modo Fallback (Google Forms)</h1>
-      <p class="text-xs text-green-700 mt-1">✅ Conectado — registros serão enviados ao Google Forms</p>
-    </div>
+  <!-- Cabeçalho -->
+  <div class="app-header">
+    <img src="https://pfst.cf2.poecdn.net/base/image/b4c6aca4c7db7589b9f0de13c8ee90d92d0ff180d82b105e4e1961cae846d611?w=225&h=92" alt="LSG Sky Chefs"/>
   </div>
 
-  <!-- App Container -->
-  <div class="max-w-3xl mx-auto p-4">
-
-    <!-- LOGIN -->
-    <section id="loginScreen" class="fade-in">
-      <div class="bg-white rounded-2xl shadow-xl p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Entrar</h2>
-
-        <div class="grid gap-4">
+  <!-- Login -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="bg-white rounded-2xl shadow-2xl p-8">
+        <div class="text-center mb-6">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">🔪 KnifeControl</h1>
+          <p class="text-gray-600 mt-2">Sistema de Controle de Objetos — <span class="font-semibold">Modo Fallback (Google Forms)</span></p>
+        </div>
+        <form id="loginForm" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Setor</label>
-            <select id="setorSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <label for="setor" class="block text-sm font-medium text-gray-700 mb-2">Setor</label>
+            <select id="setor" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="">Carregando setores...</option>
             </select>
           </div>
-
-          <button id="btnEntrar" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+          <div>
+            <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">Senha do setor</label>
+            <input type="password" id="senha" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite a senha do setor"/>
+          </div>
+          <div id="connectionStatus" class="text-center text-sm text-blue-600">📄 Aguardando planilha.json...</div>
+          <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 shadow-lg">
             Entrar
           </button>
-        </div>
+        </form>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- MENU -->
-    <section id="mainMenu" class="hidden fade-in">
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-gray-800">Bem-vindo</h2>
-            <p id="setorAtual" class="text-gray-600 mt-1">Setor: —</p>
-          </div>
-          <button id="btnSair" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Sair</button>
-        </div>
-      </div>
-
-      <div class="grid gap-4">
-        <button onclick="showScreen('retiradaScreen')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition">
-          <div class="text-4xl mb-1">📤</div>
-          <div class="text-lg font-bold">Retirada de Objeto</div>
-          <div class="text-sm opacity-90">Registrar retirada (marca como <b>Em Uso</b>)</div>
-        </button>
-
-        <button onclick="showScreen('devolucaoScreen')" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition">
-          <div class="text-4xl mb-1">📥</div>
-          <div class="text-lg font-bold">Devolução de Objeto</div>
-          <div class="text-sm opacity-90">Registrar devolução (marca como <b>Devolvido</b>)</div>
-        </button>
-
-        <button onclick="showScreen('inventarioScreen')" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition">
-          <div class="text-4xl mb-1">📋</div>
-          <div class="text-lg font-bold">Inventário de Fim de Turno</div>
-          <div class="text-sm opacity-90">Enviar status (<b>Devolvido</b>/<b>Em Uso</b>) de todos os objetos do setor</div>
-        </button>
-      </div>
-    </section>
-
-    <!-- RETIRADA -->
-    <section id="retiradaScreen" class="hidden fade-in">
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-4">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📤</span>Retirada de Objeto</h2>
-
-        <!-- Identificação -->
-        <div class="grid gap-3 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
-            <input id="matriculaRetirada" type="text" inputmode="numeric" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula"/>
-            <button onclick="identificarPorMatricula('retirada')" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Identificar</button>
-          </div>
-
-          <div id="boxFuncionarioRetirada" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-3">
-            <div class="grid gap-1">
-              <div><strong>📋 Matrícula:</strong> <span id="matriculaLabelRetirada">—</span></div>
-              <div><strong>👤 Nome:</strong> <input id="nomeFuncionarioRetirada" class="px-2 py-1 border border-green-300 rounded-md bg-gray-100 text-gray-700" readonly /></div>
-              <div><strong>🏢 Setor:</strong> <span id="setorFuncionarioRetirada">—</span></div>
-              <div><strong>🕐 Leitura:</strong> <span id="leituraRetirada">—</span></div>
-            </div>
+  <!-- Menu -->
+  <div id="mainMenu" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div class="text-center">
+          <h2 class="text-xl font-bold text-gray-800">Bem-vindo!</h2>
+          <p class="text-gray-600" id="setorAtual">Setor: </p>
+          <div class="mt-2 text-xs text-green-600 flex items-center justify-center">
+            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+            Fallback Google Forms ativo — envio de registros habilitado
           </div>
         </div>
+      </div>
 
-        <!-- Objeto -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Objeto</label>
-          <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option value="">Selecione...</option>
+      <div class="space-y-4">
+        <button onclick="showScreen('retiradaScreen')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📤</div>
+          <div class="text-xl font-bold">Retirada de Objeto</div>
+          <div class="text-sm opacity-90 mt-1">Registrar retirada (marca como <b>Em Uso</b>)</div>
+        </button>
+        <button onclick="showScreen('devolucaoScreen')" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📥</div>
+          <div class="text-xl font-bold">Devolução de Objeto</div>
+          <div class="text-sm opacity-90 mt-1">Registrar devolução (marca como <b>Devolvido</b>)</div>
+        </button>
+        <button onclick="showScreen('inventarioScreen')" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
+          <div class="text-4xl mb-2">📋</div>
+          <div class="text-xl font-bold">Inventário de Fim de Turno</div>
+          <div class="text-sm opacity-90 mt-1">Exibe quem retirou e quando; envia status (Devolvido/Em Uso)</div>
+        </button>
+        <button onclick="logout()" class="w-full bg-gray-200 text-gray-700 p-4 rounded-xl hover:bg-gray-300 transition duration-300 mt-4">
+          <div class="text-sm font-semibold">🚪 Sair</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retirada -->
+  <div id="retiradaScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📤</span> Retirada de Objeto
+        </h2>
+
+        <!-- Matrícula + Identificar (botão abaixo) -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula do Funcionário:</label>
+          <input type="text" id="matriculaRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula" />
+          <button onclick="identificarPorMatricula('retirada')" class="mt-2 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
+        </div>
+
+        <div id="funcionarioInfoRetirada" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
+        <div id="leituraInfoRetirada" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
+
+        <div id="objetoSelectionRetirada" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o Objeto:</label>
+          <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-3">
+            <option value="">Selecione um objeto...</option>
           </select>
+          <div class="text-xs text-gray-500 mb-3">Se não encontrar na lista, digite abaixo:</div>
+          <input type="text" id="objetoRetiradaManual" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Nome do objeto" />
+          <button onclick="confirmarRetirada()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Confirmar Retirada</button>
         </div>
 
-        <button onclick="confirmarRetirada()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Confirmar Retirada</button>
-        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition mt-3">← Voltar ao Menu</button>
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- DEVOLUÇÃO -->
-    <section id="devolucaoScreen" class="hidden fade-in">
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-4">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📥</span>Devolução de Objeto</h2>
+  <!-- Devolução -->
+  <div id="devolucaoScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📥</span> Devolução de Objeto
+        </h2>
 
-        <!-- (Opcional) Identificação só para registrar quem devolveu — NÃO obrigatória -->
-        <div class="grid gap-3 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula (opcional)</label>
-            <input id="matriculaDevolucao" type="text" inputmode="numeric" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Se quiser registrar"/>
-            <button onclick="identificarPorMatricula('devolucao')" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Identificar</button>
-          </div>
-
-          <div id="boxFuncionarioDevolucao" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-3">
-            <div class="grid gap-1">
-              <div><strong>📋 Matrícula:</strong> <span id="matriculaLabelDevolucao">—</span></div>
-              <div><strong>👤 Nome:</strong> <input id="nomeFuncionarioDevolucao" class="px-2 py-1 border border-green-300 rounded-md bg-gray-100 text-gray-700" readonly /></div>
-              <div><strong>🏢 Setor:</strong> <span id="setorFuncionarioDevolucao">—</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Objeto -->
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Objeto</label>
-          <select id="objetoDevolucao" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option value="">Selecione...</option>
-          </select>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Objeto</label>
+          <input id="objetoDevolucao" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Faca 01" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula (opcional)</label>
+          <input id="matriculaDevolucao" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Se disponível" />
         </div>
 
-        <button onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Confirmar Devolução</button>
-        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition mt-3">← Voltar ao Menu</button>
+        <button onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duração-300">Confirmar Devolução</button>
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duração-300 mt-4">← Voltar ao Menu</button>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- INVENTÁRIO -->
-    <section id="inventarioScreen" class="hidden fade-in">
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-4">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📋</span>Inventário de Fim de Turno</h2>
+  <!-- Inventário -->
+  <div id="inventarioScreen" class="hidden min-h-full p-4">
+    <div class="max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="mr-2">📋</span> Inventário de Fim de Turno
+        </h2>
 
-        <!-- Identificação -->
-        <div class="grid gap-3 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
-            <input id="matriculaInventario" type="text" inputmode="numeric" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula"/>
-            <button onclick="identificarPorMatricula('inventario')" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Identificar</button>
-          </div>
-
-          <div id="boxFuncionarioInventario" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-3">
-            <div class="grid gap-1">
-              <div><strong>📋 Matrícula:</strong> <span id="matriculaLabelInventario">—</span></div>
-              <div><strong>👤 Nome:</strong> <input id="nomeFuncionarioInventario" class="px-2 py-1 border border-green-300 rounded-md bg-gray-100 text-gray-700" readonly /></div>
-              <div><strong>🏢 Setor:</strong> <span id="setorFuncionarioInventario">—</span></div>
-              <div><strong>🕐 Leitura:</strong> <span id="leituraInventario">—</span></div>
-            </div>
-          </div>
+        <!-- Matrícula + Identificar (botão abaixo) -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula do Funcionário:</label>
+          <input type="text" id="matriculaInventario" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula" />
+          <button onclick="identificarPorMatricula('inventario')" class="mt-2 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
         </div>
 
-        <!-- Lista de objetos com status -->
+        <div id="funcionarioInfoInventario" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
+        <div id="leituraInfoInventario" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
+
         <div id="statusObjetosInventario" class="hidden mb-4">
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">Status dos Objetos do Setor</h3>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Status dos Objetos do Setor:</h3>
           <div id="listaObjetosInventario" class="space-y-2"></div>
         </div>
 
         <div id="inventarioActions" class="hidden">
-          <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed">Finalizar Inventário</button>
+          <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">Finalizar Inventário</button>
         </div>
 
-        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition mt-3">← Voltar ao Menu</button>
+        <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
-    </section>
+    </div>
+  </div>
 
+  <!-- Modal confirm -->
+  <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all">
+      <div class="text-center mb-6">
+        <div class="text-4xl mb-3" id="confirmIcon">❓</div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2" id="confirmTitle">Confirmar Ação</h3>
+        <p class="text-gray-600" id="confirmMessage"></p>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="cancelConfirm()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300">Não</button>
+        <button id="confirmButton" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">Sim</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -193,387 +194,461 @@
   </div>
 
   <script>
-  // ====================== CONFIG FORMS (UMA pergunta "Detalhes Extras") ======================
-  // URL do seu Form (endpoint /formResponse)
+  // ============ CONFIG FORMS ============
   const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScKBnRZ2StGX5qIqGVPrsXbt-hTbTawDYWqR3iEELCq9of7Xw/formResponse';
+  const FORMS_FIELDS = { objeto: 'entry.587663124', matricula: 'entry.360956002', funcionario: 'entry.245251034', setor: 'entry.431322508', timestamp: 'entry.2072805918', emUso: 'entry.1169418597', devolvido: 'entry.2075298705' };
+  const CHECKBOX_LABELS = { emUso: 'Em Uso', devolvido: 'Devolvido' };
 
-  // Mapeamento de campos => entry.*
-  // IMPORTANTE: "status" usa o MESMO entry da pergunta "Detalhes Extras" (checkbox único com 2 opções)
-  const FORMS_FIELDS = {
-    objeto:      'entry.587663124',
-    matricula:   'entry.360956002',
-    funcionario: 'entry.245251034',
-    setor:       'entry.431322508',
-    timestamp:   'entry.2072805918',
-    status:      'entry.1169418597' // "Detalhes Extras" — opções "Em Uso" / "Devolvido"
-  };
+  // ============ PLANILHA.JSON ============
+  const PLANILHA_URL = 'planilha.json';
+  let PLANILHA = { setores: [], objetosPorSetor: {}, funcionarios: [], senhas: {} };
 
-  // Os rótulos DEVEM ser idênticos aos do Forms
-  const STATUS_LABELS = { emUso: 'Em Uso', devolvido: 'Devolvido' };
+  // ============ STATUS ATUAL (Sheets de Respostas) ============
+  const DEFAULT_SHEET_ID = '1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE';
+  const DEFAULT_SHEET_TAB = 'Respostas ao formulário 3';
+  let statusPorObjeto = {};
 
-  // ====================== ESTADO ======================
-  let DATA = {
-    setores: [],                 // ['Segurança', 'Açougue', ...]
-    funcionarios: [],            // [{ matricula, nome, setor }]
-    objetosPorSetor: {}          // { 'Segurança': ['Faca 01', 'Tesoura 02'] }
-  };
+  // ============ ESTADO ============
   let currentSetor = '';
-  let currentFuncionario = null; // { id, nome, setor, ts }
+  let currentFuncionario = null;
 
-  // ====================== TOAST ======================
-  function showToast(message, type='success') {
-    const toast = document.getElementById('toast');
-    const toastContent = document.getElementById('toastContent');
-    const bg = type === 'success' ? 'bg-green-600' : 'bg-red-600';
-    const icon = type === 'success' ? '✅' : '❌';
-    toastContent.className = `rounded-xl shadow-2xl p-4 text-white ${bg}`;
-    toastContent.innerHTML = `<div class="flex items-center space-x-3"><div class="text-2xl">${icon}</div><div class="flex-1 font-semibold">${message}</div></div>`;
+  // ============ TOAST ============
+  function showToast(message, type='success'){
+    const toast=document.getElementById('toast');
+    const toastContent=document.getElementById('toastContent');
+    const bg= type==='success'?'bg-green-500':'bg-red-500';
+    const icon= type==='success'?'✅':'❌';
+    toastContent.className=`rounded-xl shadow-2xl p-4 text-white ${bg}`;
+    toastContent.innerHTML=`<div class="flex items-center space-x-3"><div class="text-2xl">${icon}</div><div class="flex-1 font-semibold">${message}</div></div>`;
     toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3000);
+    setTimeout(()=>toast.classList.add('hidden'),3000);
   }
 
-  // ====================== AUX ======================
-  function showScreen(id) {
-    ['loginScreen','mainMenu','retiradaScreen','devolucaoScreen','inventarioScreen']
-      .forEach(s => document.getElementById(s).classList.add('hidden'));
-    const el = document.getElementById(id);
+  // ============ LOAD PLANILHA ============
+  async function carregarPlanilha() {
+    try {
+      const res = await fetch(PLANILHA_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('planilha.json não encontrado');
+      const j = await res.json();
+      PLANILHA.setores = Array.isArray(j.setores) ? j.setores : [];
+      PLANILHA.objetosPorSetor = (j.objetosPorSetor && typeof j.objetosPorSetor === 'object') ? j.objetosPorSetor : {};
+      PLANILHA.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
+      PLANILHA.senhas = (j.senhas && typeof j.senhas==='object') ? j.senhas : {};
+      document.getElementById('connectionStatus').className='text-center text-sm text-green-600';
+      document.getElementById('connectionStatus').textContent='📄 planilha.json carregado e conectado';
+    } catch (e) {
+      console.warn('Falha ao ler planilha.json:', e);
+      PLANILHA = { setores: [], objetosPorSetor: {}, funcionarios: [], senhas:{} };
+      document.getElementById('connectionStatus').className='text-center text-sm text-red-600';
+      document.getElementById('connectionStatus').textContent='❌ planilha.json não encontrado';
+    } finally {
+      loadSetores();
+    }
+  }
+
+  // ============ LOGIN & SETORES ============
+  function loadSetores(){
+    const setorSelect=document.getElementById('setor');
+    setorSelect.innerHTML='<option value="">Selecione um setor...</option>';
+    (PLANILHA.setores || []).forEach(s=>{
+      const opt=document.createElement('option');
+      opt.value=s; opt.textContent=s;
+      setorSelect.appendChild(opt);
+    });
+    if ((PLANILHA.setores||[]).length === 0) {
+      const opt=document.createElement('option');
+      opt.value=''; opt.textContent='(Nenhum setor no planilha.json)';
+      setorSelect.appendChild(opt);
+    }
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const setor=document.getElementById('setor').value;
+    const senha=document.getElementById('senha').value;
+    if(!setor){ showToast('Selecione o setor','error'); return; }
+    // Valida senha por setor a partir do planilha.json
+    const senhaEsperada = PLANILHA.senhas?.[setor] || '';
+    if(String(senhaEsperada) !== String(senha)){
+      showToast('Senha do setor incorreta','error');
+      return;
+    }
+    currentSetor=setor;
+    document.getElementById('setorAtual').textContent='Setor: ' + currentSetor;
+    showScreen('mainMenu');
+    showToast('Login realizado com sucesso!','success');
+    await carregarStatusSetorAtual();
+  });
+
+  // ============ NAVEGAÇÃO ============
+  function showScreen(id){
+    ['loginScreen','mainMenu','retiradaScreen','devolucaoScreen','inventarioScreen'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+    const el=document.getElementById(id);
     el.classList.remove('hidden');
     el.classList.add('fade-in');
-
-    if (id === 'retiradaScreen') {
-      preencherDropdownObjetos('objetoRetirada');
-      resetIdentificacao('retirada');
-    }
-    if (id === 'devolucaoScreen') {
-      preencherDropdownObjetos('objetoDevolucao');
-      resetIdentificacao('devolucao');
-    }
-    if (id === 'inventarioScreen') {
-      resetIdentificacao('inventario');
-      prepararInventario();
-    }
+    if(id==='retiradaScreen') loadObjetosDisponiveis();
+    if(id==='inventarioScreen') prepararInventario();
   }
 
-  function resetIdentificacao(ctx) {
-    if (ctx === 'retirada') {
-      document.getElementById('matriculaRetirada').value = '';
-      document.getElementById('boxFuncionarioRetirada').classList.add('hidden');
-      currentFuncionario = null;
-    }
-    if (ctx === 'devolucao') {
-      document.getElementById('matriculaDevolucao').value = '';
-      document.getElementById('boxFuncionarioDevolucao').classList.add('hidden');
-    }
-    if (ctx === 'inventario') {
-      document.getElementById('matriculaInventario').value = '';
-      document.getElementById('boxFuncionarioInventario').classList.add('hidden');
-      currentFuncionario = null;
-    }
+  function voltarMenu(){
+    currentFuncionario=null;
+    document.getElementById('matriculaRetirada').value='';
+    document.getElementById('matriculaInventario').value='';
+    document.getElementById('funcionarioInfoRetirada').classList.add('hidden');
+    document.getElementById('leituraInfoRetirada').classList.add('hidden');
+    document.getElementById('objetoSelectionRetirada').classList.add('hidden');
+    document.getElementById('funcionarioInfoInventario').classList.add('hidden');
+    document.getElementById('leituraInfoInventario').classList.add('hidden');
+    document.getElementById('statusObjetosInventario').classList.add('hidden');
+    document.getElementById('inventarioActions').classList.add('hidden');
+    showScreen('mainMenu');
   }
 
-  function logout() {
-    currentSetor = '';
-    currentFuncionario = null;
-    document.getElementById('setorSelect').value = '';
+  function logout(){
+    currentSetor='';
+    currentFuncionario=null;
+    document.getElementById('senha').value='';
+    document.getElementById('setor').value='';
     showScreen('loginScreen');
   }
 
-  // ====================== CARREGAR planilha.json ======================
-  async function loadData() {
-    try {
-      const res = await fetch('./planilha.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Falha ao carregar planilha.json');
-      const raw = await res.json();
-
-      // Normalização leve de chaves
-      const setKey = (obj, keys) => {
-        for (const k of keys) if (obj[k] !== undefined) return obj[k];
-        return undefined;
-      };
-
-      // Setores
-      const setores = Array.isArray(raw.Setores || raw.setores) ? (raw.Setores || raw.setores) : [];
-      DATA.setores = setores.map(s => String(s).trim()).filter(Boolean);
-
-      // Funcionarios
-      const arrFunc = Array.isArray(raw.Funcionarios || raw.funcionarios) ? (raw.Funcionarios || raw.funcionarios) : [];
-      DATA.funcionarios = arrFunc.map(f => {
-        return {
-          matricula: String(setKey(f, ['Matricula','matricula','id','ID']) || '').trim(),
-          nome: String(setKey(f, ['Nome','nome']) || '').trim(),
-          setor: String(setKey(f, ['Setor','setor']) || '').trim()
-        };
-      }).filter(f => f.matricula);
-
-      // Objetos por Setor
-      const ops = raw.ObjetosPorSetor || raw.objetosPorSetor || {};
-      const norm = {};
-      for (const k of Object.keys(ops)) {
-        const arr = Array.isArray(ops[k]) ? ops[k] : [];
-        norm[String(k).trim()] = arr.map(x => String(x).trim()).filter(Boolean);
-      }
-      DATA.objetosPorSetor = norm;
-
-      // Popular dropdown de Setor (prioriza os setores presentes em ObjetosPorSetor; se vazio, usa Setores)
-      const setoresFonte = Object.keys(DATA.objetosPorSetor).length ? Object.keys(DATA.objetosPorSetor) : DATA.setores;
-      const setorSelect = document.getElementById('setorSelect');
-      setorSelect.innerHTML = '<option value="">Selecione um setor...</option>';
-      setoresFonte.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s; opt.textContent = s;
-        setorSelect.appendChild(opt);
-      });
-    } catch (err) {
-      console.error(err);
-      showToast('Falha ao carregar planilha.json', 'error');
-      // fallback mínimo
-      DATA.setores = ['Teste'];
-      DATA.objetosPorSetor = { 'Teste': ['FACA TESTE'] };
-      DATA.funcionarios = [];
-      const setorSelect = document.getElementById('setorSelect');
-      setorSelect.innerHTML = '<option value="">Selecione um setor...</option><option>Teste</option>';
-    }
+  // ============ IDENTIFICAÇÃO POR MATRÍCULA ============
+  function encontrarFuncionario(matricula){
+    matricula = String(matricula||'').trim();
+    if(!matricula) return null;
+    const f = (PLANILHA.funcionarios||[]).find(x=> String(x.matricula||'').trim()===matricula && (x.ativo!==false));
+    return f || null;
   }
 
-  // ====================== IDENTIFICAÇÃO POR MATRÍCULA ======================
-  function buscarFuncionarioPorMatricula(matricula, setorAlvo) {
-    const mat = String(matricula || '').trim();
-    if (!mat) return null;
-    // Tenta por setor atual primeiro
-    let found = DATA.funcionarios.find(f => f.matricula === mat && (!!setorAlvo ? f.setor === setorAlvo : true));
-    if (!found) {
-      // fallback: qualquer setor
-      found = DATA.funcionarios.find(f => f.matricula === mat);
-    }
-    return found || null;
-  }
+  function identificarPorMatricula(context){
+    const inputId = (context==='retirada') ? 'matriculaRetirada' : 'matriculaInventario';
+    const matricula = document.getElementById(inputId).value.trim();
+    if(!matricula){ showToast('Digite a matrícula','error'); return; }
+    const f = encontrarFuncionario(matricula);
+    if(!f){ showToast('Matrícula não encontrada ou inativa no planilha.json','error'); return; }
 
-  function identificarPorMatricula(context) {
-    const now = new Date();
-    if (context === 'retirada') {
-      const mat = document.getElementById('matriculaRetirada').value;
-      const f = buscarFuncionarioPorMatricula(mat, currentSetor);
-      if (!f) { showToast('Matrícula não encontrada no setor/planilha', 'error'); return; }
-      currentFuncionario = { id: f.matricula, nome: f.nome, setor: f.setor || currentSetor, ts: now };
-      document.getElementById('boxFuncionarioRetirada').classList.remove('hidden');
-      document.getElementById('matriculaLabelRetirada').textContent = f.matricula;
-      document.getElementById('nomeFuncionarioRetirada').value = f.nome || '';
-      document.getElementById('setorFuncionarioRetirada').textContent = f.setor || currentSetor;
-      document.getElementById('leituraRetirada').textContent = now.toLocaleString('pt-BR');
-      showToast('Funcionário identificado', 'success');
-    }
+    currentFuncionario = { id: f.matricula, nome: f.nome||'', setor: currentSetor, dataLeitura: new Date() };
 
-    if (context === 'devolucao') {
-      const mat = document.getElementById('matriculaDevolucao').value;
-      if (!mat) { // matrícula é opcional
-        document.getElementById('boxFuncionarioDevolucao').classList.add('hidden');
-        showToast('Devolução sem matrícula (opcional)', 'success');
-        return;
-      }
-      const f = buscarFuncionarioPorMatricula(mat, currentSetor);
-      if (!f) { showToast('Matrícula não encontrada no setor/planilha', 'error'); return; }
-      document.getElementById('boxFuncionarioDevolucao').classList.remove('hidden');
-      document.getElementById('matriculaLabelDevolucao').textContent = f.matricula;
-      document.getElementById('nomeFuncionarioDevolucao').value = f.nome || '';
-      document.getElementById('setorFuncionarioDevolucao').textContent = f.setor || currentSetor;
-      showToast('Funcionário identificado (opcional)', 'success');
+    if(context==='retirada'){
+      showFuncionarioInfoRetirada();
+      loadObjetosDisponiveis();
     }
-
-    if (context === 'inventario') {
-      const mat = document.getElementById('matriculaInventario').value;
-      const f = buscarFuncionarioPorMatricula(mat, currentSetor);
-      if (!f) { showToast('Matrícula não encontrada no setor/planilha', 'error'); return; }
-      currentFuncionario = { id: f.matricula, nome: f.nome, setor: f.setor || currentSetor, ts: now };
-      document.getElementById('boxFuncionarioInventario').classList.remove('hidden');
-      document.getElementById('matriculaLabelInventario').textContent = f.matricula;
-      document.getElementById('nomeFuncionarioInventario').value = f.nome || '';
-      document.getElementById('setorFuncionarioInventario').textContent = f.setor || currentSetor;
-      document.getElementById('leituraInventario').textContent = now.toLocaleString('pt-BR');
-      // Ao identificar, prepara a lista
+    if(context==='inventario'){
+      showFuncionarioInfoInventario();
       prepararInventario();
-      showToast('Funcionário identificado', 'success');
     }
   }
 
-  // ====================== UI OBJETOS ======================
-  function preencherDropdownObjetos(selectId) {
-    const select = document.getElementById(selectId);
-    select.innerHTML = '<option value="">Selecione...</option>';
-    const lista = DATA.objetosPorSetor[currentSetor] || [];
-    if (lista.length === 0) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'Nenhum objeto configurado para este setor';
-      select.appendChild(opt);
-      select.disabled = true;
-      return;
-    }
-    select.disabled = false;
-    lista.forEach(nome => {
-      const o = document.createElement('option');
-      o.value = nome;
-      o.textContent = nome;
+  // ============ UI FUNCIONÁRIO ============
+  function showFuncionarioInfoRetirada(){
+    const info=document.getElementById('funcionarioInfoRetirada');
+    const leitura=document.getElementById('leituraInfoRetirada');
+    const selection=document.getElementById('objetoSelectionRetirada');
+    info.classList.remove('hidden');
+    leitura.classList.remove('hidden');
+    selection.classList.remove('hidden');
+    info.innerHTML=`<div class="grid grid-cols-1 gap-2">
+      <div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div>
+      <label class="text-sm text-gray-700 mt-1"><strong>👤 Nome:</strong></label>
+      <input id="nomeFuncionarioRetirada" class="w-full px-3 py-2 border border-green-300 rounded-lg bg-gray-100" value="${currentFuncionario.nome||''}" readonly />
+      <div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div>
+    </div>`;
+    const dataLeitura=currentFuncionario.dataLeitura||new Date();
+    leitura.innerHTML=`<div><strong>🕐 Identificado em:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`;
+  }
+
+  function showFuncionarioInfoInventario(){
+    const info=document.getElementById('funcionarioInfoInventario');
+    const leitura=document.getElementById('leituraInfoInventario');
+    info.classList.remove('hidden');
+    leitura.classList.remove('hidden');
+    info.innerHTML=`<div class="grid grid-cols-1 gap-2">
+      <div><strong>📋 Matrícula:</strong> ${currentFuncionario.id}</div>
+      <label class="text-sm text-gray-700 mt-1"><strong>👤 Nome:</strong></label>
+      <input id="nomeFuncionarioInventario" class="w-full px-3 py-2 border border-green-300 rounded-lg bg-gray-100" value="${currentFuncionario.nome||''}" readonly />
+      <div><strong>🏢 Setor:</strong> ${currentFuncionario.setor}</div>
+    </div>`;
+    const dataLeitura=currentFuncionario.dataLeitura||new Date();
+    leitura.innerHTML=`<div><strong>🕐 Identificado em:</strong> ${new Date(dataLeitura).toLocaleString('pt-BR')}</div>`;
+  }
+
+  // ============ OBJETOS (dropdown e inventário) ============
+  function loadObjetosDisponiveis(){
+    const select=document.getElementById('objetoRetirada');
+    select.innerHTML='<option value="">Selecione um objeto...</option>';
+    const lista = (PLANILHA.objetosPorSetor?.[currentSetor] || []);
+    lista.forEach(nome=>{
+      const o=document.createElement('option');
+      o.value=nome; o.textContent=nome;
       select.appendChild(o);
     });
   }
 
-  function prepararInventario() {
-    const container = document.getElementById('listaObjetosInventario');
-    const statusDiv = document.getElementById('statusObjetosInventario');
-    const actionsDiv = document.getElementById('inventarioActions');
-    container.innerHTML = '';
+  function prepararInventario(){
+    const container=document.getElementById('listaObjetosInventario');
+    const statusDiv=document.getElementById('statusObjetosInventario');
+    const actionsDiv=document.getElementById('inventarioActions');
 
-    const lista = DATA.objetosPorSetor[currentSetor] || [];
-    if (lista.length === 0) {
-      container.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum objeto configurado para este setor no arquivo <span class="font-mono">planilha.json</span>.</p>';
+    container.innerHTML='';
+    const lista=(PLANILHA.objetosPorSetor?.[currentSetor] || []);
+    if(lista.length===0){
+      container.innerHTML='<p class="text-gray-500 text-center py-4">Nenhum objeto encontrado para este setor no <span class="font-mono">planilha.json</span>.</p>';
       statusDiv.classList.remove('hidden');
       actionsDiv.classList.add('hidden');
       return;
     }
-
     statusDiv.classList.remove('hidden');
     actionsDiv.classList.remove('hidden');
 
-    lista.forEach((nome, idx) => {
-      const id = 'inv_' + idx;
-      const row = document.createElement('div');
-      row.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+    const novoContainer = container.cloneNode(false);
+    container.parentNode.replaceChild(novoContainer, container);
+
+    lista.forEach((nome, idx)=>{
+      const id='inv_'+idx;
+      const info = statusPorObjeto[nome];
+      const isEmUso = (info && info.status==='Em Uso');
+      const legenda = isEmUso
+        ? `<span class="text-xs text-gray-600 ml-3">— em uso por <b>${info.nome||info.matricula||'?'}</b> em ${info.data ? info.data.toLocaleString('pt-BR') : '?'}</span>`
+        : '';
+
+      const row=document.createElement('div');
+      row.className='flex items-center justify-between p-3 border border-gray-200 rounded-lg';
       row.innerHTML = `
-        <div class="font-semibold text-gray-800">${nome}</div>
+        <div class="font-semibold text-gray-800 flex items-center">
+          <span>${nome}</span>
+          <span class="inline-block" id="aux_${id}">${legenda}</span>
+        </div>
         <div class="flex items-center space-x-4">
           <label class="inline-flex items-center space-x-1 text-sm">
-            <input type="radio" name="${id}" value="${STATUS_LABELS.devolvido}" checked class="text-purple-600"/>
+            <input type="radio" name="${id}" value="Devolvido" ${isEmUso ? '' : 'checked'} class="text-purple-600" />
             <span>Devolvido</span>
           </label>
           <label class="inline-flex items-center space-x-1 text-sm">
-            <input type="radio" name="${id}" value="${STATUS_LABELS.emUso}" class="text-purple-600"/>
+            <input type="radio" name="${id}" value="Em Uso" ${isEmUso ? 'checked' : ''} class="text-purple-600" />
             <span>Em Uso</span>
           </label>
-        </div>
-      `;
-      row.dataset.objeto = nome;
-      row.dataset.group = id;
-      container.appendChild(row);
+        </div>`;
+      row.dataset.objeto=nome;
+      row.dataset.group=id;
+      novoContainer.appendChild(row);
     });
-  }
 
-  // ====================== ENVIO AO GOOGLE FORMS ======================
-  // Envio mais compatível: application/x-www-form-urlencoded + no-cors
-  async function postToForms({ objeto, matricula, funcionario, setor, status }) {
-    if (!GOOGLE_FORM_URL.includes('/formResponse')) throw new Error('GOOGLE_FORM_URL inválida');
-    const params = new URLSearchParams();
-    params.append('fvv', '1');
-    params.append('pageHistory', '0');
-
-    params.append(FORMS_FIELDS.objeto, (objeto || '').trim());
-    params.append(FORMS_FIELDS.matricula, (matricula || '').trim());
-    params.append(FORMS_FIELDS.funcionario, (funcionario || '').trim());
-    params.append(FORMS_FIELDS.setor, (setor || '').trim());
-    params.append(FORMS_FIELDS.timestamp, new Date().toISOString());
-    params.append(FORMS_FIELDS.status, status); // "Em Uso" OU "Devolvido"
-
-    await fetch(GOOGLE_FORM_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: params.toString()
-    });
-  }
-
-  // ====================== AÇÕES: RETIRADA / DEVOLUÇÃO / INVENTÁRIO ======================
-  function confirmarRetirada() {
-    const objeto = (document.getElementById('objetoRetirada').value || '').trim();
-    if (!objeto) { showToast('Selecione o objeto', 'error'); return; }
-    if (!currentFuncionario) { showToast('Identifique o funcionário pela matrícula', 'error'); return; }
-
-    const nome = document.getElementById('nomeFuncionarioRetirada').value || '';
-    const status = STATUS_LABELS.emUso;
-
-    if (!confirm(`Confirma a retirada do objeto "${objeto}"?`)) return;
-
-    postToForms({
-      objeto,
-      matricula: currentFuncionario.id,
-      funcionario: nome,
-      setor: currentSetor,
-      status
-    }).then(() => {
-      showToast('Retirada registrada com sucesso!', 'success');
-      showScreen('mainMenu');
-    }).catch(err => {
-      showToast('Falha ao enviar ao Forms: ' + err.message, 'error');
-    });
-  }
-
-  function confirmarDevolucao() {
-    const objeto = (document.getElementById('objetoDevolucao').value || '').trim();
-    if (!objeto) { showToast('Selecione o objeto', 'error'); return; }
-
-    // matrícula opcional
-    const mat = (document.getElementById('matriculaDevolucao').value || '').trim();
-    const nome = document.getElementById('nomeFuncionarioDevolucao').value || '';
-    const status = STATUS_LABELS.devolvido;
-
-    if (!confirm(`Confirma a devolução do objeto "${objeto}"?`)) return;
-
-    postToForms({
-      objeto,
-      matricula: mat,
-      funcionario: nome,
-      setor: currentSetor,
-      status
-    }).then(() => {
-      showToast('Devolução registrada com sucesso!', 'success');
-      showScreen('mainMenu');
-    }).catch(err => {
-      showToast('Falha ao enviar ao Forms: ' + err.message, 'error');
-    });
-  }
-
-  async function finalizarInventario() {
-    if (!currentFuncionario) { showToast('Identifique o funcionário pela matrícula', 'error'); return; }
-
-    const linhas = Array.from(document.querySelectorAll('#listaObjetosInventario > div'));
-    if (linhas.length === 0) { showToast('Nenhum objeto para inventariar', 'error'); return; }
-
-    if (!confirm('Confirma a finalização do inventário e envio dos status ao Forms?')) return;
-
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-    try {
-      const nome = document.getElementById('nomeFuncionarioInventario').value || '';
-      for (const row of linhas) {
-        const objeto = row.dataset.objeto;
-        const group  = row.dataset.group;
-        const checked = document.querySelector(`input[name="${group}"]:checked`);
-        const status  = checked ? checked.value : STATUS_LABELS.devolvido;
-        await postToForms({
-          objeto,
-          matricula: currentFuncionario.id,
-          funcionario: nome,
-          setor: currentSetor,
-          status
-        });
-        await sleep(300); // evita descarte por envios muito rápidos
+    novoContainer.addEventListener('change', (ev)=>{
+      const tgt = ev.target;
+      if(!tgt.name || !tgt.name.startsWith('inv_')) return;
+      const group = tgt.name;
+      const auxSpan = document.getElementById('aux_'+group);
+      const linha = tgt.closest('[data-objeto]');
+      const nome = linha?.dataset?.objeto || '';
+      if(!auxSpan) return;
+      if(tgt.value==='Em Uso' && tgt.checked){
+        const i = statusPorObjeto[nome];
+        if(i && i.status==='Em Uso'){
+          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso por <b>${i.nome||i.matricula||'?'}</b> em ${i.data ? i.data.toLocaleString('pt-BR') : '?'}</span>`;
+        } else if (currentFuncionario) {
+          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso por <b>${currentFuncionario.nome||currentFuncionario.id}</b> em ${new Date().toLocaleString('pt-BR')}</span>`;
+        } else {
+          auxSpan.innerHTML = ` <span class=\"text-xs text-gray-600 ml-3\">— em uso (sem registro prévio)</span>`;
+        }
+      } else {
+        auxSpan.textContent = '';
       }
-      showToast('Inventário enviado com sucesso!', 'success');
-      showScreen('mainMenu');
-    } catch (err) {
-      showToast('Falha ao enviar ao Forms: ' + err.message, 'error');
+    });
+  }
+
+  // ============ ENVIO AO FORMS ============
+  async function postToForms({ objeto, matricula, funcionario, setor, status }){
+    if(!GOOGLE_FORM_URL.includes('/formResponse')){ throw new Error('GOOGLE_FORM_URL inválida'); }
+    const fd=new FormData();
+    fd.append(FORMS_FIELDS.objeto, objeto||'');
+    fd.append(FORMS_FIELDS.matricula, matricula||'');
+    fd.append(FORMS_FIELDS.funcionario, funcionario||'');
+    fd.append(FORMS_FIELDS.setor, setor||'');
+    fd.append(FORMS_FIELDS.timestamp, new Date().toISOString());
+    if(status==='Em Uso')   fd.append(FORMS_FIELDS.emUso, CHECKBOX_LABELS.emUso);
+    if(status==='Devolvido') fd.append(FORMS_FIELDS.devolvido, CHECKBOX_LABELS.devolvido);
+    await fetch(GOOGLE_FORM_URL, { method:'POST', mode:'no-cors', body: fd });
+  }
+
+  function confirmarRetirada(){
+    const objSel=(document.getElementById('objetoRetirada').value||'').trim();
+    const objManual=(document.getElementById('objetoRetiradaManual').value||'').trim();
+    const objeto= objManual || objSel;
+    if(!objeto){ showToast('Selecione ou digite o objeto','error'); return; }
+    if(!currentFuncionario){ showToast('Identifique o funcionário pela matrícula','error'); return; }
+    const nome=(document.getElementById('nomeFuncionarioRetirada')?.value||'').trim();
+    showConfirm(`Confirma a retirada do objeto "${objeto}"?`, async ()=>{
+      try{
+        await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status:'Em Uso' });
+        showToast('Retirada registrada com sucesso!','success');
+        statusPorObjeto[objeto] = { status:'Em Uso', nome, matricula: currentFuncionario.id, data: new Date() };
+        currentFuncionario=null;
+        document.getElementById('funcionarioInfoRetirada').classList.add('hidden');
+        document.getElementById('leituraInfoRetirada').classList.add('hidden');
+        document.getElementById('objetoSelectionRetirada').classList.add('hidden');
+        document.getElementById('matriculaRetirada').value='';
+        document.getElementById('objetoRetiradaManual').value='';
+        setTimeout(()=>showScreen('mainMenu'),800);
+      }catch(err){
+        showToast('Falha ao enviar ao Forms: '+err.message,'error');
+      }
+    });
+  }
+
+  function confirmarDevolucao(){
+    const objeto=(document.getElementById('objetoDevolucao').value||'').trim();
+    const mat=(document.getElementById('matriculaDevolucao').value||'').trim();
+    if(!objeto){ showToast('Informe o nome do objeto','error'); return; }
+    showConfirm(`Confirma a devolução do objeto "${objeto}"?`, async ()=>{
+      try{
+        await postToForms({ objeto, matricula: mat, funcionario: '', setor: currentSetor, status:'Devolvido' });
+        showToast('Devolução registrada com sucesso!','success');
+        statusPorObjeto[objeto] = { status:'Devolvido', nome:'', matricula:'', data: new Date() };
+        document.getElementById('objetoDevolucao').value='';
+        document.getElementById('matriculaDevolucao').value='';
+        setTimeout(()=>showScreen('mainMenu'),800);
+      }catch(err){
+        showToast('Falha ao enviar ao Forms: '+err.message,'error');
+      }
+    });
+  }
+
+  async function finalizarInventario(){
+    if(!currentFuncionario){ showToast('Identifique o funcionário pela matrícula','error'); return; }
+    const nome=(document.getElementById('nomeFuncionarioInventario')?.value||'').trim();
+    const linhas=Array.from(document.querySelectorAll('#listaObjetosInventario > div'));
+    if(linhas.length===0){ showToast('Nenhum objeto para inventariar','error'); return; }
+    showConfirm('Confirma a finalização do inventário e envio dos status ao Forms?', async ()=>{
+      try{
+        for(const row of linhas){
+          const objeto=row.dataset.objeto;
+          const group=row.dataset.group;
+          const checked=document.querySelector(`input[name="${group}"]:checked`);
+          const status= checked? checked.value : 'Devolvido';
+          await postToForms({ objeto, matricula: currentFuncionario.id, funcionario: nome, setor: currentSetor, status });
+          statusPorObjeto[objeto] = { status, nome: (status==='Em Uso'? nome : ''), matricula: (status==='Em Uso'? currentFuncionario.id : ''), data: new Date() };
+        }
+        showToast('Inventário enviado com sucesso!','success');
+        currentFuncionario=null;
+        document.getElementById('funcionarioInfoInventario').classList.add('hidden');
+        document.getElementById('leituraInfoInventario').classList.add('hidden');
+        document.getElementById('statusObjetosInventario').classList.add('hidden');
+        document.getElementById('inventarioActions').classList.add('hidden');
+        document.getElementById('matriculaInventario').value='';
+        setTimeout(()=>showScreen('mainMenu'),800);
+      }catch(err){
+        showToast('Falha ao enviar ao Forms: '+err.message,'error');
+      }
+    });
+  }
+
+  // ============ MODAL ============
+  let confirmCallback=null;
+  function showConfirm(message, callback){
+    const modal=document.getElementById('confirmModal');
+    const msg=document.getElementById('confirmMessage');
+    const btn=document.getElementById('confirmButton');
+    msg.textContent=message;
+    modal.classList.remove('hidden');
+    confirmCallback=callback;
+    btn.onclick=function(){
+      modal.classList.add('hidden');
+      if(confirmCallback){ confirmCallback(); confirmCallback=null; }
+    }
+  }
+  function cancelConfirm(){
+    document.getElementById('confirmModal').classList.add('hidden');
+    confirmCallback=null;
+  }
+
+  // ============ Status atual via Sheet ============
+  function csvToRows(text) {
+    const rows = [];
+    let i=0, cur=[], field='', inQuotes=false;
+    while (i<text.length) {
+      const c = text[i];
+      if (c === '"') {
+        if (inQuotes && text[i+1]==='"') { field+='"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (c === ',' && !inQuotes) {
+        cur.push(field); field='';
+      } else if ((c === '\n' || c === '\r') && !inQuotes) {
+        if (field !== '' || cur.length>0) { cur.push(field); rows.push(cur); cur=[]; field=''; }
+      } else {
+        field += c;
+      }
+      i++;
+    }
+    if (field!=='' || cur.length>0) { cur.push(field); rows.push(cur); }
+    return rows.filter(r=>r.length>1 || (r.length===1 && r[0].trim()!==''));
+  }
+  function normalizarHeader(h) { return (h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function mapearColunas(headers) {
+    const idx = {};
+    headers.forEach((h,i)=>{
+      const n = normalizarHeader(h);
+      if (n.includes('objeto')) idx.objeto = i;
+      else if (n.includes('matric')) idx.matricula = i;
+      else if (n.includes('funcion')) idx.funcionario = i;
+      else if (n.includes('setor')) idx.setor = i;
+      else if (n.includes('timestamp') || n.includes('data') || n.includes('hora')) idx.timestamp = i;
+      else if (n.includes('em uso')) idx.emUso = i;
+      else if (n.includes('devolvido')) idx.devolvido = i;
+      else if (n==='status') idx.status = i;
+    });
+    return idx;
+  }
+
+  async function carregarStatusSetorAtual(){
+    statusPorObjeto = {};
+    const id = DEFAULT_SHEET_ID;
+    const tab = DEFAULT_SHEET_TAB;
+    if(!id || !tab) return;
+    const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+    try{
+      const res = await fetch(url);
+      if(!res.ok) return;
+      const text = await res.text();
+      const rows = csvToRows(text);
+      if(!rows.length) return;
+      const headers = rows[0];
+      const idx = mapearColunas(headers);
+      const registros = rows.slice(1).map(r=>{
+        const rawData = (r[idx.timestamp]||'').trim();
+        let data=null; if (rawData) { const d1 = new Date(rawData); data = isNaN(d1)? null : d1; }
+        let status = '';
+        const vEmUso = idx.emUso!=null ? (r[idx.emUso]||'').toString().toLowerCase() : '';
+        const vDevolvido = idx.devolvido!=null ? (r[idx.devolvido]||'').toString().toLowerCase() : '';
+        if (idx.status!=null) status = (r[idx.status]||'').trim();
+        else if (vEmUso.includes('em uso') || vEmUso==='true' || vEmUso==='1' || vEmUso==='x') status = 'Em Uso';
+        else if (vDevolvido.includes('devolvido') || vDevolvido==='true' || vDevolvido==='1' || vDevolvido==='x') status = 'Devolvido';
+        return {
+          data,
+          setor: idx.setor!=null ? r[idx.setor] : '',
+          objeto: idx.objeto!=null ? r[idx.objeto] : '',
+          matricula: idx.matricula!=null ? r[idx.matricula] : '',
+          funcionario: idx.funcionario!=null ? r[idx.funcionario] : '',
+          status
+        };
+      }).filter(x=>x.setor===currentSetor && x.objeto);
+
+      const map = new Map();
+      for(const r of registros){
+        const k = r.objeto;
+        const cur = map.get(k);
+        if(!cur || (r.data && (!cur.data || r.data>cur.data))) map.set(k, r);
+      }
+      map.forEach(v=>{
+        statusPorObjeto[v.objeto] = { status: v.status, nome: v.funcionario, matricula: v.matricula, data: v.data };
+      });
+    }catch(e){
+      console.warn('Falha ao carregar status do Sheets:', e);
     }
   }
 
-  // ====================== BOOT ======================
-  document.getElementById('btnEntrar').addEventListener('click', () => {
-    const setor = document.getElementById('setorSelect').value;
-    if (!setor) { showToast('Selecione um setor', 'error'); return; }
-    currentSetor = setor;
-    document.getElementById('setorAtual').textContent = 'Setor: ' + currentSetor;
-    showScreen('mainMenu');
-  });
-  document.getElementById('btnSair').addEventListener('click', logout);
-
-  window.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
+  // ============ BOOT ============
+  window.addEventListener('DOMContentLoaded', ()=>{
+    carregarPlanilha();
   });
   </script>
 </body>
