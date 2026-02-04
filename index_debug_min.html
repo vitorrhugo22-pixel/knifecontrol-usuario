@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KnifeControl — DEBUG MIN (POST mínimo ao /formResponse)</title>
+  <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:24px}</style>
+</head>
+<body>
+  <h2>DEBUG MIN — envio mínimo ao Google Forms (/formResponse)</h2>
+  <p>Preencha e clique <b>Enviar</b>. Uma nova aba abrirá com o retorno do Google Forms.</p>
+
+  <label>Tipo de Ação: <input id="tipo" value="Retirada"/></label><br/><br/>
+  <label>Matrícula: <input id="mat" value="10000"/></label><br/><br/>
+  <label>Objeto: <input id="obj" value="FACA TESTE"/></label><br/><br/>
+
+  <button onclick="enviar()">Enviar</button>
+
+  <script>
+  const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScKBnRZ2StGX5qIqGVPrsXbt-hTbTawDYWqR3iEELCq9of7Xw/formResponse';
+  const FIELDS = { tipo:'entry.2075298705', mat:'entry.360956002', obj:'entry.587663124' };
+  function enviar(){
+    const tipo = document.getElementById('tipo').value.trim();
+    const mat  = document.getElementById('mat').value.trim();
+    const obj  = document.getElementById('obj').value.trim();
+    const f=document.createElement('form'); f.action=GOOGLE_FORM_URL; f.method='POST'; f.target='_blank';
+    const add=(n,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v; f.appendChild(i); };
+    add(FIELDS.tipo, tipo); add(FIELDS.mat, mat); add(FIELDS.obj, obj);
+    // Campo 'submit' ajuda a alguns formulários a reconhecer a submissão direta
+    add('submit','Submit');
+    document.body.appendChild(f); f.submit(); document.body.removeChild(f);
+  }
+  </script>
+</body>
+</html>
