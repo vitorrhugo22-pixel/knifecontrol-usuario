@@ -1,652 +1,363 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>KnifeControl — Controle (Cadastro & Relatórios)</title>
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Controle de Objetos Cortantes — Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jsPDF + autotable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-/Ff4fM1rB3qUUg0kG/3P7bZ3k3t+1ZJ0P1XK6ZrWvDk+0jR9m1x2Qe7M0q9wM6yF7f0QeVEtz3eZxNnN0fQH6g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha512-iJf3c6b1wHCN5Q3mNQ9Z4C1n8j2p8m3Qecg2jRk3b1z8Qnq8f8W0JY4lXJ6S8Q2m5Hk8w9xwR8a2kqQ7fD2d0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
-    body { box-sizing: border-box; }
-    .app-header { background: white; border-bottom: 2px solid #e5e7eb; padding: 8px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .app-header img { height: 50px; width: auto; display: block; margin: 0 auto; }
-    @media print {
-      #cadastroSection, #filtrosRelatorio, #topActions, #jsonActions { display: none !important; }
-      table { page-break-inside: avoid; }
-    }
+    body { background: #f5f7fb; }
+    .container { max-width: 1180px; }
+    .card { background:#fff; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .grid-cols-responsive { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+    @media(max-width: 1024px){ .grid-cols-responsive{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media(max-width: 640px){ .grid-cols-responsive{ grid-template-columns: 1fr; } }
+    .table-wrap { overflow:auto; max-height: 60vh; }
+    .sticky-th th { position: sticky; top: 0; background: #fff; z-index: 2; }
   </style>
 </head>
-<body class="bg-gray-100">
-  <!-- Cabeçalho coerente com o app de usuário -->
-  <div class="app-header">
-    <img src="https://pfst.cf2.poecdn.net/base/image/b4c6aca4c7db7589b9f0de13c8ee90d92d0ff180d82b105e4e1961cae846d611?w=225&h=92" alt="LSG Sky Chefs"/>
-  </div>
-
-  <main class="max-w-6xl mx-auto p-4 space-y-6">
-    <!-- Título -->
-    <header class="bg-white rounded-2xl shadow-xl p-6">
-      <h1 class="text-3xl font-bold text-gray-800">🔧 KnifeControl — Painel de Controle</h1>
-      <p class="text-gray-600 mt-2">
-        Cadastro de Funcionários e Objetos (arquivo <b>planilha.json</b>) e Relatórios a partir da Planilha de Respostas do Google Forms — sem Apps Script.
-      </p>
+<body>
+  <div class="container mx-auto p-4">
+    <header class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Controle de Objetos Cortantes — Dashboard</h1>
+        <p class="text-gray-600 text-sm">Leitura do Google Sheets • Exportação CSV/PDF A4</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-gray-600">Carregar logo (opcional):
+          <input id="logoInput" type="file" accept="image/*" class="block text-sm" />
+        </label>
+        <img id="logoPreview" alt="logo" class="h-10 w-auto hidden"/>
+      </div>
     </header>
 
-    <!-- Abas simples -->
-    <div class="flex gap-2" id="topActions">
-      <button id="tabCadastro" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Cadastro</button>
-      <button id="tabRelatorios" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300">Relatórios</button>
-    </div>
-
-    <!-- ========== CADASTRO ========== -->
-    <section id="cadastroSection" class="space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Carregar/Salvar JSON -->
-        <div class="bg-white rounded-2xl shadow-xl p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-3">📁 Arquivo JSON</h2>
-          <div id="jsonActions" class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Carregar planilha.json</label>
-              <input id="fileInput" type="file" accept="application/json" class="w-full border border-gray-300 rounded-lg p-2"/>
-            </div>
-            <div class="flex gap-2">
-              <button id="btnBaixarJson" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Baixar planilha.json</button>
-              <button id="btnResetJson" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700">Reset (modelo)</button>
-            </div>
-            <p class="text-xs text-gray-500">* Baixe o JSON atualizado e substitua no servidor/hosting.</p>
-          </div>
+    <section class="card p-4 mb-4">
+      <div class="grid-cols-responsive">
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Setor (do objeto)</label>
+          <select id="filtroSetor" class="w-full border rounded px-3 py-2 text-sm">
+            <option value="">Todos</option>
+          </select>
         </div>
-
-        <!-- Setores -->
-        <div class="bg-white rounded-2xl shadow-xl p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-3">🏢 Setores</h2>
-          <div class="flex gap-2 mb-3">
-            <input id="novoSetor" class="flex-1 border border-gray-300 rounded-lg px-3 py-2" placeholder="Nome do setor"/>
-            <button id="btnAddSetor" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
-          </div>
-          <ul id="listaSetores" class="space-y-2 max-h-72 overflow-auto"></ul>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Funcionário</label>
+          <input id="filtroFuncionario" type="text" placeholder="Contém..." class="w-full border rounded px-3 py-2 text-sm"/>
         </div>
-
-        <!-- Objetos por Setor -->
-        <div class="bg-white rounded-2xl shadow-xl p-6">
-          <h2 class="text-xl font-bold text-gray-800 mb-3">🔪 Objetos por Setor</h2>
-          <div class="grid grid-cols-1 gap-2 mb-3">
-            <select id="setorObjeto" class="border border-gray-300 rounded-lg px-3 py-2"></select>
-            <div class="flex gap-2">
-              <input id="novoObjeto" class="flex-1 border border-gray-300 rounded-lg px-3 py-2" placeholder='Ex.: "60 – FACA"'/>
-              <button id="btnAddObjeto" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
-            </div>
-          </div>
-          <div id="listaObjetosWrap" class="border border-gray-200 rounded-xl p-3 max-h-64 overflow-auto">
-            <ul id="listaObjetos" class="space-y-1 text-sm"></ul>
-          </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Matrícula</label>
+          <input id="filtroMatricula" type="text" placeholder="Igual a..." class="w-full border rounded px-3 py-2 text-sm"/>
         </div>
-      </div>
-
-      <!-- Funcionários -->
-      <div class="bg-white rounded-2xl shadow-xl p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-3">👥 Funcionários</h2>
-        <div class="grid md:grid-cols-4 gap-2 mb-3">
-          <input id="funcMatricula" class="border border-gray-300 rounded-lg px-3 py-2" placeholder="Matrícula"/>
-          <input id="funcNome" class="border border-gray-300 rounded-lg px-3 py-2" placeholder="Nome"/>
-          <select id="funcSetor" class="border border-gray-300 rounded-lg px-3 py-2"></select>
-          <button id="btnAddFuncionario" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Objeto</label>
+          <input id="filtroObjeto" type="text" placeholder="Contém..." class="w-full border rounded px-3 py-2 text-sm"/>
         </div>
-
-        <div class="overflow-auto">
-          <table class="min-w-full border border-gray-200 rounded-xl overflow-hidden">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left p-3 border-b">Matrícula</th>
-                <th class="text-left p-3 border-b">Nome</th>
-                <th class="text-left p-3 border-b">Setor</th>
-                <th class="text-left p-3 border-b">Ativo</th>
-                <th class="text-left p-3 border-b">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyFuncionarios" class="divide-y"></tbody>
-          </table>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Data inicial</label>
+          <input id="filtroDataIni" type="date" class="w-full border rounded px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Data final</label>
+          <input id="filtroDataFim" type="date" class="w-full border rounded px-3 py-2 text-sm"/>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">Tipo de Ação</label>
+          <select id="filtroTipo" class="w-full border rounded px-3 py-2 text-sm">
+            <option value="">Todos</option>
+            <option>Retirada</option>
+            <option>Devolução</option>
+            <option>Inventário de Final de Turno</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="btnAtualizar" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Atualizar</button>
         </div>
       </div>
     </section>
 
-    <!-- ========== RELATÓRIOS ========== -->
-    <section id="relatoriosSection" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-xl p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">📊 Relatórios (Google Sheets do Forms)</h2>
-        <p class="text-sm text-gray-600 mb-4">
-          Publique a guia de respostas em <b>Arquivo → Publicar na Web</b> e informe os dados abaixo.
-        </p>
-        <div id="filtrosRelatorio" class="grid md:grid-cols-5 gap-3">
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">ID da Planilha</label>
-            <input id="sheetId" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="1AbCdef..."/>
-          </div>
-          <div class="">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Guia (aba)</label>
-            <input id="sheetTab" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Respostas ao formulário 1"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Período: De</label>
-            <input id="dataIni" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Até</label>
-            <input id="dataFim" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Setor</label>
-            <select id="fSetor" class="w-full border border-gray-300 rounded-lg px-3 py-2"><option value="">Todos</option></select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Objeto</label>
-            <input id="fObjeto" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="(opcional)"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
-            <input id="fMatricula" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="(opcional)"/>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select id="fStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-              <option value="">Todos</option>
-              <option>Em Uso</option>
-              <option>Devolvido</option>
-            </select>
-          </div>
-          <div class="flex items-end gap-2">
-            <button id="btnCarregar" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Carregar</button>
-            <button id="btnLimpar" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Limpar</button>
-          </div>
+    <section class="card p-4 mb-4">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">Registros: <span id="lblTotal">0</span> • Pares Retirada/Devolução: <span id="lblPares">0</span></div>
+        <div class="flex gap-2">
+          <button id="btnCSV" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm">Exportar CSV</button>
+          <button id="btnPDF" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">Exportar PDF (A4)</button>
         </div>
       </div>
-
-      <!-- KPIs -->
-      <div class="grid md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
-          <div class="text-2xl">🧾</div>
-          <div class="text-sm text-gray-500">Registros</div>
-          <div id="kpiRegistros" class="text-3xl font-bold">0</div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
-          <div class="text-2xl">📤</div>
-          <div class="text-sm text-gray-500">Retiradas</div>
-          <div id="kpiRetiradas" class="text-3xl font-bold">0</div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
-          <div class="text-2xl">📥</div>
-          <div class="text-sm text-gray-500">Devoluções</div>
-          <div id="kpiDevolucoes" class="text-3xl font-bold">0</div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center">
-          <div class="text-2xl">⏱️</div>
-          <div class="text-sm text-gray-500">Em uso (status mais recente por objeto)</div>
-          <div id="kpiEmUso" class="text-3xl font-bold">0</div>
-        </div>
-      </div>
-
-      <!-- Tabela + ações -->
-      <div class="bg-white rounded-2xl shadow-xl p-6">
-        <div class="flex flex-wrap gap-2 mb-3">
-          <button id="btnExportCsv" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">Exportar CSV</button>
-          <button id="btnImprimir" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700">Imprimir / PDF</button>
-        </div>
-        <div class="overflow-auto">
-          <table class="min-w-full border border-gray-200 rounded-xl overflow-hidden">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left p-3 border-b">Data/Hora</th>
-                <th class="text-left p-3 border-b">Setor</th>
-                <th class="text-left p-3 border-b">Objeto</th>
-                <th class="text-left p-3 border-b">Matrícula</th>
-                <th class="text-left p-3 border-b">Funcionário</th>
-                <th class="text-left p-3 border-b">Status</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyRelatorio" class="divide-y"></tbody>
-          </table>
-        </div>
+      <div class="table-wrap mt-3">
+        <table id="tbl" class="min-w-full text-sm">
+          <thead class="sticky-th">
+            <tr class="text-left">
+              <th class="px-3 py-2 border-b">Matrícula</th>
+              <th class="px-3 py-2 border-b">Funcionário</th>
+              <th class="px-3 py-2 border-b">Setor do Objeto</th>
+              <th class="px-3 py-2 border-b">Objeto</th>
+              <th class="px-3 py-2 border-b">Data/Hora Retirada</th>
+              <th class="px-3 py-2 border-b">Data/Hora Devolução</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
     </section>
-  </main>
 
-  <!-- Toast simples -->
-  <div id="toast" class="hidden fixed top-20 right-4 z-50 max-w-sm">
-    <div id="toastContent" class="rounded-xl shadow-2xl p-4 transform transition-all"></div>
+    <section class="text-xs text-gray-500">SHEET_ID: <code id="lblSheet"></code> • Aba: <code id="lblAba"></code></section>
   </div>
 
   <script>
-    // ====== Configuração padrão do relatório (preenchido com os dados que você passou) ======
-    const DEFAULT_SHEET_ID = '1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE';
-    const DEFAULT_SHEET_TAB = 'Respostas ao formulário 3';
+  // ================= CONFIG =================
+  const SHEET_ID   = '1k7824Hngs2ztGzeenK2ZDfBebQOdTOCUQMOWNUpGwQY';
+  const SHEET_TABS = ['Respostas ao formulário 1']; // ativa
+  const FORM_OPTS = { RETIRADA:'Retirada', DEVOLUCAO:'Devolução', INVENTARIO:'Inventário de Final de Turno', EM_USO:'Em Uso', DEVOLVIDO:'Devolvido' };
 
-    // ====== Estado ======
-    let dados = { setores: [], objetosPorSetor: {}, funcionarios: [] };
-    let registros = []; // dados dos relatórios
+  // Logo (base64) se disponível via arquivo ou 'logo.png' local
+  let LOGO_B64 = null; // será preenchido ao carregar logoInput ou buscar 'logo.png'
 
-    // ====== UI helpers ======
-    function showToast(message, type='success') {
-      const toast=document.getElementById('toast');
-      const toastContent=document.getElementById('toastContent');
-      const bg = type==='success'?'bg-green-500':'bg-red-500';
-      const icon = type==='success'?'✅':'❌';
-      toastContent.className = `rounded-xl shadow-2xl p-4 text-white ${bg}`;
-      toastContent.innerHTML = `<div class="flex items-center gap-3"><div class="text-2xl">${icon}</div><div class="font-semibold">${message}</div></div>`;
-      toast.classList.remove('hidden');
-      setTimeout(()=>toast.classList.add('hidden'),3000);
-    }
+  // ================= Helpers =================
+  function normalize(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function fmtDateBR(d){ const p=n=> String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+  function parseAnyDateBRorISO(raw){ if(!raw) return null; const s=String(raw).trim(); const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/); if(m){ const [_,dd,mm,yyyy,HH,MM,SS]=m; const dt = new Date(`${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`); if(!isNaN(dt)) return dt; } const d2=new Date(s); return isNaN(d2)? null : d2; }
+  function download(filename, text){ const blob = new Blob([text], {type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200); }
 
-    function renderSetores() {
-      const ul = document.getElementById('listaSetores');
-      const sel1 = document.getElementById('setorObjeto');
-      const sel2 = document.getElementById('funcSetor');
-      const sel3 = document.getElementById('fSetor');
-
-      ul.innerHTML = '';
-      sel1.innerHTML = '';
-      sel2.innerHTML = '';
-      sel3.innerHTML = '<option value="">Todos</option>';
-
-      dados.setores.forEach(s => {
-        // lista
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between border border-gray-200 rounded-lg p-2';
-        li.innerHTML = `
-          <div class="font-semibold text-gray-800">${s}</div>
-          <div class="flex gap-2">
-            <button data-action="renomear" data-setor="${s}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Renomear</button>
-            <button data-action="remover" data-setor="${s}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
-          </div>`;
-        ul.appendChild(li);
-        // selects
-        const o1 = new Option(s, s); sel1.add(o1);
-        const o2 = new Option(s, s); sel2.add(o2);
-        const o3 = new Option(s, s); sel3.add(o3);
-      });
-
-      ul.onclick = (ev) => {
-        const btn = ev.target.closest('button'); if (!btn) return;
-        const setor = btn.dataset.setor; const action = btn.dataset.action;
-        if (action==='remover') {
-          if (!confirm(`Remover setor "${setor}"?`)) return;
-          dados.setores = dados.setores.filter(x => x!==setor);
-          delete dados.objetosPorSetor[setor];
-          dados.funcionarios.forEach(f=>{ if (f.setor===setor) f.setor=''; });
-          renderSetores(); renderObjetos(); renderFuncionarios();
-        } else if (action==='renomear') {
-          const novo = prompt('Novo nome do setor:', setor);
-          if (!novo || novo===setor) return;
-          if (dados.setores.includes(novo)) { showToast('Já existe um setor com esse nome','error'); return; }
-          dados.setores = dados.setores.map(x => x===setor ? novo : x);
-          dados.objetosPorSetor[novo] = (dados.objetosPorSetor[setor]||[]).slice();
-          delete dados.objetosPorSetor[setor];
-          dados.funcionarios.forEach(f=>{ if (f.setor===setor) f.setor=novo; });
-          renderSetores(); renderObjetos(); renderFuncionarios();
-        }
-      };
-    }
-
-    function renderObjetos() {
-      const lista = document.getElementById('listaObjetos');
-      const setor = document.getElementById('setorObjeto').value || dados.setores[0] || '';
-      lista.innerHTML = '';
-      if (!setor) return;
-      const itens = (dados.objetosPorSetor[setor] || []).slice().sort((a,b)=>a.localeCompare(b,'pt-BR'));
-      itens.forEach(nome=>{
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between';
-        li.innerHTML = `<span class="text-gray-800">${nome}</span>
-          <div class="flex gap-2">
-            <button data-action="renomear" data-obj="${nome}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Renomear</button>
-            <button data-action="remover" data-obj="${nome}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
-          </div>`;
-        lista.appendChild(li);
-      });
-
-      lista.onclick = (ev)=>{
-        const btn = ev.target.closest('button'); if (!btn) return;
-        const obj = btn.dataset.obj; const action = btn.dataset.action;
-        if (action==='remover') {
-          if (!confirm(`Remover objeto "${obj}" do setor "${setor}"?`)) return;
-          dados.objetosPorSetor[setor] = (dados.objetosPorSetor[setor]||[]).filter(x=>x!==obj);
-          renderObjetos();
-        } else if (action==='renomear') {
-          const novo = prompt('Novo nome do objeto:', obj);
-          if (!novo || novo===obj) return;
-          const arr = dados.objetosPorSetor[setor]||[];
-          if (arr.includes(novo)) { showToast('Já existe um objeto com esse nome','error'); return; }
-          dados.objetosPorSetor[setor] = arr.map(x=>x===obj?novo:x);
-          renderObjetos();
-        }
-      };
-    }
-
-    function renderFuncionarios() {
-      const tb = document.getElementById('tbodyFuncionarios');
-      tb.innerHTML = '';
-      const arr = dados.funcionarios.slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
-      arr.forEach(f=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="p-3">${f.matricula||''}</td>
-          <td class="p-3">${f.nome||''}</td>
-          <td class="p-3">${f.setor||''}</td>
-          <td class="p-3">${f.ativo ? 'Sim' : 'Não'}</td>
-          <td class="p-3 space-x-2">
-            <button data-action="editar" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Editar</button>
-            <button data-action="toggle" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600">${f.ativo?'Desativar':'Ativar'}</button>
-            <button data-action="remover" data-id="${f.matricula}" class="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Remover</button>
-          </td>
-        `;
-        tb.appendChild(tr);
-      });
-
-      tb.onclick = (ev)=>{
-        const btn = ev.target.closest('button'); if (!btn) return;
-        const id = btn.dataset.id; const action = btn.dataset.action;
-        const idx = dados.funcionarios.findIndex(x=>x.matricula===id);
-        if (idx<0) return;
-        if (action==='remover') {
-          if (!confirm('Remover funcionário?')) return;
-          dados.funcionarios.splice(idx,1);
-          renderFuncionarios();
-        } else if (action==='toggle') {
-          dados.funcionarios[idx].ativo = !dados.funcionarios[idx].ativo;
-          renderFuncionarios();
-        } else if (action==='editar') {
-          const obj = dados.funcionarios[idx];
-          const nome = prompt('Nome:', obj.nome||''); if (nome===null) return;
-          const matricula = prompt('Matrícula:', obj.matricula||''); if (matricula===null) return;
-          const setor = prompt('Setor (deixe vazio p/ sem vínculo):', obj.setor||''); if (setor===null) return;
-          obj.nome = (nome||'').trim(); obj.matricula = (matricula||'').trim(); obj.setor = (setor||'').trim();
-          renderFuncionarios();
-        }
-      };
-    }
-
-    // ====== JSON load/save ======
-    async function carregarJsonInicial() {
-      try {
-        const res = await fetch('planilha.json', {cache:'no-store'});
-        if (!res.ok) throw new Error('Não encontrado');
-        const j = await res.json();
-        // validações simples:
-        dados.setores = Array.isArray(j.setores) ? j.setores : [];
-        dados.objetosPorSetor = typeof j.objetosPorSetor==='object' && j.objetosPorSetor ? j.objetosPorSetor : {};
-        dados.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
-        renderSetores(); renderObjetos(); renderFuncionarios();
-      } catch(e) {
-        // carrega modelo vazio coerente com seu index atual
-        dados = { setores: [], objetosPorSetor: {}, funcionarios: [] };
-        renderSetores(); renderObjetos(); renderFuncionarios();
-        showToast('planilha.json não encontrado — usando modelo vazio. Você pode carregar um arquivo ou começar do zero.');
-      }
-    }
-
-    function baixarJson() {
-      const blob = new Blob([JSON.stringify(dados, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'planilha.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    document.getElementById('fileInput').addEventListener('change', async (ev)=>{
-      const file = ev.target.files[0]; if (!file) return;
-      try {
-        const text = await file.text();
-        const j = JSON.parse(text);
-        dados.setores = Array.isArray(j.setores) ? j.setores : [];
-        dados.objetosPorSetor = typeof j.objetosPorSetor==='object' && j.objetosPorSetor ? j.objetosPorSetor : {};
-        dados.funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
-        renderSetores(); renderObjetos(); renderFuncionarios();
-        showToast('planilha.json carregado');
-      } catch(e) {
-        showToast('JSON inválido','error');
-      } finally {
-        ev.target.value = '';
-      }
+  // ================= Carregar planilha.json (mapa de objetos->setor) =================
+  let PLANILHA = { setores:[], setoresSenha:{}, objetos:{}, funcionarios:[] };
+  let OBJ_TO_SETOR = new Map();
+  async function carregarJSON(){
+    const res = await fetch('planilha.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('planilha.json não encontrado');
+    const j = await res.json(); PLANILHA=j || {};
+    OBJ_TO_SETOR = new Map();
+    const objetos = PLANILHA.objetos || {};
+    Object.keys(objetos).forEach(setor=>{
+      (objetos[setor]||[]).forEach(obj=> OBJ_TO_SETOR.set(String(obj), setor));
     });
+    // popular filtro de setor
+    const sel = document.getElementById('filtroSetor');
+    sel.innerHTML = '<option value="">Todos</option>' + Object.keys(objetos).map(s=>`<option>${s}</option>`).join('');
+  }
 
-    document.getElementById('btnBaixarJson').onclick = baixarJson;
-    document.getElementById('btnResetJson').onclick = ()=>{ dados={setores:[],objetosPorSetor:{},funcionarios:[]}; renderSetores(); renderObjetos(); renderFuncionarios(); showToast('Modelo vazio carregado'); };
+  // ================= Ler Sheets e construir pares =================
+  function mapCols(headers){
+    const idx={}; headers.forEach((h,i)=>{ const n=normalize(h);
+      if(n.includes('objeto')) idx.objeto=i;
+      else if(n.includes('matric')) idx.matricula=i;
+      else if(n.includes('funcion')) idx.funcionario=i;
+      else if(n.includes('carimbo')) idx.carimbo=i; // Carimbo de data/hora (padrão do Forms)
+      else if(n.includes('timestamp')||n.includes('data')&&n.includes('hora')) idx.timestamp=i; // sua pergunta Timestamp
+      else if(n.includes('tipo de ação')||n.includes('tipo de acao')) idx.tipoAcao=i;
+      else if(n.includes('detalhe')) idx.detalhe=i;
+    }); return idx;
+  }
 
-    // ====== Ações de Cadastro ======
-    document.getElementById('btnAddSetor').onclick = ()=>{
-      const nome = (document.getElementById('novoSetor').value||'').trim();
-      if (!nome) return;
-      if (dados.setores.includes(nome)) { showToast('Setor já existe','error'); return; }
-      dados.setores.push(nome);
-      dados.objetosPorSetor[nome] = dados.objetosPorSetor[nome]||[];
-      document.getElementById('novoSetor').value='';
-      renderSetores(); renderObjetos();
-    };
+  async function lerAba(tab){
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Falha ao ler aba: '+tab);
+    const csv = await res.text();
+    // parse CSV simples
+    const rows=[]; let i=0, cur=[], field='', inQ=false; const t=csv;
+    while(i<t.length){ const c=t[i]; if(c==='"'){ if(inQ && t[i+1]==='"'){ field+='"'; i++; } else { inQ=!inQ; } }
+      else if(c===',' && !inQ){ cur.push(field); field=''; }
+      else if((c==='\n'||c==='\r')&&!inQ){ if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); cur=[]; field=''; } }
+      else { field+=c; } i++; }
+    if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); }
+    return rows.filter(r=> r.length>1 || (r.length===1 && r[0].trim()!==''));
+  }
 
-    document.getElementById('setorObjeto').addEventListener('change', renderObjetos);
+  function aplicaFiltrosEventos(eventos){
+    const fSetor = document.getElementById('filtroSetor').value.trim();
+    const fFunc = normalize(document.getElementById('filtroFuncionario').value.trim());
+    const fMat  = document.getElementById('filtroMatricula').value.trim();
+    const fObj  = normalize(document.getElementById('filtroObjeto').value.trim());
+    const fTipo = document.getElementById('filtroTipo').value.trim();
+    const dIni  = document.getElementById('filtroDataIni').value ? new Date(document.getElementById('filtroDataIni').value+'T00:00:00') : null;
+    const dFim  = document.getElementById('filtroDataFim').value ? new Date(document.getElementById('filtroDataFim').value+'T23:59:59') : null;
 
-    document.getElementById('btnAddObjeto').onclick = ()=>{
-      const setor = document.getElementById('setorObjeto').value;
-      const nome = (document.getElementById('novoObjeto').value||'').trim();
-      if (!setor || !nome) return;
-      const arr = dados.objetosPorSetor[setor] = (dados.objetosPorSetor[setor]||[]);
-      if (arr.includes(nome)) { showToast('Objeto já existe nesse setor','error'); return; }
-      arr.push(nome);
-      document.getElementById('novoObjeto').value='';
-      renderObjetos();
-    };
+    return eventos.filter(ev=>{
+      if(fSetor && ev.setorObjeto!==fSetor) return false;
+      if(fFunc && !normalize(ev.funcionario).includes(fFunc)) return false;
+      if(fMat && String(ev.matricula)!==String(fMat)) return false;
+      if(fObj && !normalize(ev.objeto).includes(fObj)) return false;
+      if(fTipo && ev.tipoAcao!==fTipo) return false;
+      if(dIni && (!ev.data || ev.data<dIni)) return false;
+      if(dFim && (!ev.data || ev.data>dFim)) return false;
+      return true;
+    });
+  }
 
-    document.getElementById('btnAddFuncionario').onclick = ()=>{
-      const matricula = (document.getElementById('funcMatricula').value||'').trim();
-      const nome = (document.getElementById('funcNome').value||'').trim();
-      const setor = (document.getElementById('funcSetor').value||'').trim();
-      if (!matricula || !nome) { showToast('Preencha matrícula e nome','error'); return; }
-      if (dados.funcionarios.some(f=>f.matricula===matricula)) { showToast('Matrícula já existe','error'); return; }
-      dados.funcionarios.push({matricula, nome, setor, ativo:true});
-      document.getElementById('funcMatricula').value='';
-      document.getElementById('funcNome').value='';
-      renderFuncionarios();
-    };
+  function construirPares(eventos){
+    // eventos já filtrados por UI — agora montamos pares por (matricula,objeto)
+    // ordena por data
+    const evs = eventos.slice().sort((a,b)=> (a.data||0)-(b.data||0));
+    const stacks = new Map(); // key -> stack de retiradas abertas
+    const pares = []; // {matricula,funcionario,setorObjeto,objeto,dtRet,dtDev}
 
-    // ====== Abas ======
-    document.getElementById('tabCadastro').onclick = ()=>{
-      document.getElementById('tabCadastro').className='px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700';
-      document.getElementById('tabRelatorios').className='px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300';
-      document.getElementById('cadastroSection').classList.remove('hidden');
-      document.getElementById('relatoriosSection').classList.add('hidden');
-    };
-    document.getElementById('tabRelatorios').onclick = ()=>{
-      document.getElementById('tabRelatorios').className='px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700';
-      document.getElementById('tabCadastro').className='px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300';
-      document.getElementById('cadastroSection').classList.add('hidden');
-      document.getElementById('relatoriosSection').classList.remove('hidden');
-    };
-
-    // ====== Relatórios: CSV & filtros ======
-    function csvToRows(text) {
-      const rows = [];
-      let i=0, cur=[], field='', inQuotes=false;
-      while (i<text.length) {
-        const c = text[i];
-        if (c === '"') {
-          if (inQuotes && text[i+1]==='"') { field+='"'; i++; }
-          else { inQuotes = !inQuotes; }
-        } else if (c === ',' && !inQuotes) {
-          cur.push(field); field='';
-        } else if ((c === '\n' || c === '\r') && !inQuotes) {
-          if (field !== '' || cur.length>0) { cur.push(field); rows.push(cur); cur=[]; field=''; }
+    for(const ev of evs){
+      const key = `${ev.matricula}||${ev.objeto}`;
+      if(ev.tipoAcao===FORM_OPTS.RETIRADA){
+        if(!stacks.has(key)) stacks.set(key, []);
+        stacks.get(key).push(ev);
+      } else if(ev.tipoAcao===FORM_OPTS.DEVOLUCAO){
+        const st = stacks.get(key); if(st && st.length){
+          const rt = st.pop();
+          pares.push({
+            matricula: ev.matricula||rt.matricula||'',
+            funcionario: ev.funcionario||rt.funcionario||'',
+            setorObjeto: ev.setorObjeto||rt.setorObjeto||'',
+            objeto: ev.objeto,
+            dtRet: rt.data||null,
+            dtDev: ev.data||null
+          });
         } else {
-          field += c;
+          // devolução sem retirada correspondente no filtro -> ainda registramos linha sem retirada
+          pares.push({ matricula: ev.matricula||'', funcionario: ev.funcionario||'', setorObjeto: ev.setorObjeto||'', objeto: ev.objeto, dtRet: null, dtDev: ev.data||null });
         }
-        i++;
-      }
-      if (field!=='' || cur.length>0) { cur.push(field); rows.push(cur); }
-      return rows.filter(r=>r.length>1 || (r.length===1 && r[0].trim()!==''));
-    }
-
-    function normalizarHeader(h) { return (h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-
-    function mapearColunas(headers) {
-      const idx = {};
-      headers.forEach((h,i)=>{
-        const n = normalizarHeader(h);
-        if (n.includes('objeto')) idx.objeto = i;
-        else if (n.includes('matric')) idx.matricula = i;
-        else if (n.includes('funcion')) idx.funcionario = i;
-        else if (n.includes('setor')) idx.setor = i;
-        else if (n.includes('timestamp') || n.includes('data') || n.includes('hora')) idx.timestamp = i;
-        else if (n.includes('em uso')) idx.emUso = i;
-        else if (n.includes('devolvido')) idx.devolvido = i;
-        else if (n==='status') idx.status = i;
-      });
-      return idx;
-    }
-
-    function aplicarFiltros(base) {
-      const fSetor = document.getElementById('fSetor').value;
-      const fObjeto = document.getElementById('fObjeto').value.trim().toLowerCase();
-      const fMatricula = document.getElementById('fMatricula').value.trim().toLowerCase();
-      const fStatus = document.getElementById('fStatus').value;
-      const di = document.getElementById('dataIni').value ? new Date(document.getElementById('dataIni').value+'T00:00:00') : null;
-      const df = document.getElementById('dataFim').value ? new Date(document.getElementById('dataFim').value+'T23:59:59') : null;
-
-      return base.filter(r=>{
-        if (fSetor && r.setor!==fSetor) return false;
-        if (fObjeto && !String(r.objeto||'').toLowerCase().includes(fObjeto)) return false;
-        if (fMatricula && !String(r.matricula||'').toLowerCase().includes(fMatricula)) return false;
-        if (fStatus && r.status!==fStatus) return false;
-        if (di && r.data && r.data < di) return false;
-        if (df && r.data && r.data > df) return false;
-        return true;
-      });
-    }
-
-    function renderTabela(rows) {
-      const tb = document.getElementById('tbodyRelatorio');
-      tb.innerHTML = '';
-      rows.forEach(r=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="p-3">${r.data ? r.data.toLocaleString('pt-BR') : ''}</td>
-          <td class="p-3">${r.setor||''}</td>
-          <td class="p-3">${r.objeto||''}</td>
-          <td class="p-3">${r.matricula||''}</td>
-          <td class="p-3">${r.funcionario||''}</td>
-          <td class="p-3">${r.status||''}</td>`;
-        tb.appendChild(tr);
-      });
-    }
-
-    function atualizarKpis(rows) {
-      const total = rows.length;
-      const retiradas = rows.filter(r=>r.status==='Em Uso').length;
-      const dev = rows.filter(r=>r.status==='Devolvido').length;
-
-      // status mais recente por objeto
-      const porObj = new Map();
-      rows.forEach(r=>{
-        const k = r.objeto||'';
-        if (!k) return;
-        const cur = porObj.get(k);
-        if (!cur || (r.data && cur.data && r.data > cur.data) || (r.data && !cur.data)) porObj.set(k, r);
-      });
-      let emUsoAtuais = 0;
-      porObj.forEach(v=>{ if (v.status==='Em Uso') emUsoAtuais++; });
-
-      document.getElementById('kpiRegistros').textContent = total;
-      document.getElementById('kpiRetiradas').textContent = retiradas;
-      document.getElementById('kpiDevolucoes').textContent = dev;
-      document.getElementById('kpiEmUso').textContent = emUsoAtuais;
-    }
-
-    async function carregarRegistros() {
-      const id = (document.getElementById('sheetId').value||'').trim();
-      const tab = (document.getElementById('sheetTab').value||'').trim();
-      if (!id || !tab) { showToast('Informe ID e Guia da planilha','error'); return; }
-      const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Não foi possível ler a planilha (publique a aba)');
-        const text = await res.text();
-        const rows = csvToRows(text);
-        if (!rows.length) { showToast('Sem dados','error'); return; }
-        const headers = rows[0];
-        const idx = mapearColunas(headers);
-        registros = rows.slice(1).map(r=>{
-          const rawData = (r[idx.timestamp]||'').trim();
-          let data=null; if (rawData) {
-            const d1 = new Date(rawData);
-            data = isNaN(d1)? null : d1;
-          }
-          let status = '';
-          const vEmUso = idx.emUso!=null ? (r[idx.emUso]||'').toString().toLowerCase() : '';
-          const vDevolvido = idx.devolvido!=null ? (r[idx.devolvido]||'').toString().toLowerCase() : '';
-          if (idx.status!=null) status = (r[idx.status]||'').trim();
-          else if (vEmUso.includes('em uso') || vEmUso==='true' || vEmUso==='1' || vEmUso==='x') status = 'Em Uso';
-          else if (vDevolvido.includes('devolvido') || vDevolvido==='true' || vDevolvido==='1' || vDevolvido==='x') status = 'Devolvido';
-          return {
-            data,
-            setor: idx.setor!=null ? r[idx.setor] : '',
-            objeto: idx.objeto!=null ? r[idx.objeto] : '',
-            matricula: idx.matricula!=null ? r[idx.matricula] : '',
-            funcionario: idx.funcionario!=null ? r[idx.funcionario] : '',
-            status
-          };
-        }).filter(x=>x.objeto || x.matricula || x.funcionario || x.setor || x.status);
-
-        const filtrados = aplicarFiltros(registros);
-        renderTabela(filtrados);
-        atualizarKpis(filtrados);
-        showToast('Registros carregados');
-      } catch (e) {
-        console.error(e);
-        showToast('Falha ao carregar: ' + e.message, 'error');
       }
     }
+    // retiradas que ficaram abertas (sem devolução)
+    stacks.forEach(arr=> arr.forEach(rt=>{
+      pares.push({ matricula: rt.matricula||'', funcionario: rt.funcionario||'', setorObjeto: rt.setorObjeto||'', objeto: rt.objeto, dtRet: rt.data||null, dtDev: null });
+    }));
+    return pares;
+  }
 
-    function exportCsv() {
-      const tb = document.getElementById('tbodyRelatorio');
-      const rows = [['Timestamp','Setor','Objeto','Matrícula','Funcionário','Status']];
-      Array.from(tb.querySelectorAll('tr')).forEach(tr=>{
-        const tds = tr.querySelectorAll('td');
-        rows.push(Array.from(tds).map(td=> (td.textContent||'').replace(/\s+/g,' ').trim() ));
-      });
-      const csv = rows.map(r=> r.map(v=>{
-        const s = String(v).replace(/"/g,'""');
-        return `"${s}"`;
-      }).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'relatorio_knifecolor.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
+  function renderTabela(pares){
+    const tb = document.getElementById('tbody'); tb.innerHTML='';
+    document.getElementById('lblPares').textContent = pares.length;
+    for(const r of pares){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class='px-3 py-2 border-b'>${r.matricula||''}</td>
+        <td class='px-3 py-2 border-b'>${r.funcionario||''}</td>
+        <td class='px-3 py-2 border-b'>${r.setorObjeto||''}</td>
+        <td class='px-3 py-2 border-b'>${r.objeto||''}</td>
+        <td class='px-3 py-2 border-b'>${r.dtRet? fmtDateBR(r.dtRet):''}</td>
+        <td class='px-3 py-2 border-b'>${r.dtDev? fmtDateBR(r.dtDev):''}</td>`;
+      tb.appendChild(tr);
     }
+  }
 
-    document.getElementById('btnImprimir').onclick = ()=>window.print();
+  function exportCSV(pares){
+    const headers = ['Matricula','Funcionario','Setor do Objeto','Objeto','DataHoraRetirada','DataHoraDevolucao'];
+    const rows = pares.map(r=> [r.matricula||'', r.funcionario||'', r.setorObjeto||'', r.objeto||'', r.dtRet?fmtDateBR(r.dtRet):'', r.dtDev?fmtDateBR(r.dtDev):'']);
+    const csv = [headers.join(';')].concat(rows.map(a=> a.map(x=> '"'+String(x).replace(/"/g,'""')+'"').join(';'))).join('\n');
+    download('controle_objetos.csv', csv);
+  }
 
-    // ====== Eventos Relatórios ======
-    document.getElementById('btnCarregar').onclick = carregarRegistros;
-    document.getElementById('btnLimpar').onclick = ()=>{
-      document.getElementById('dataIni').value='';
-      document.getElementById('dataFim').value='';
-      document.getElementById('fSetor').value='';
-      document.getElementById('fObjeto').value='';
-      document.getElementById('fMatricula').value='';
-      document.getElementById('fStatus').value='';
-      const filtrados = aplicarFiltros(registros);
-      renderTabela(filtrados); atualizarKpis(filtrados);
+  async function ensureLogoBase64(){
+    // If already loaded via input, keep
+    if(LOGO_B64) return LOGO_B64;
+    // Try fetch local logo.png
+    try{
+      const res = await fetch('logo.png');
+      if(res.ok){ const blob = await res.blob(); const b64 = await blobToBase64(blob); LOGO_B64 = b64; const img=document.getElementById('logoPreview'); img.src=b64; img.classList.remove('hidden'); }
+    }catch(e){ /* ignore */ }
+    return LOGO_B64;
+  }
+  function blobToBase64(blob){ return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onerror=reject; fr.onload=()=>resolve(fr.result); fr.readAsDataURL(blob); }); }
+
+  async function exportPDF(pares){
+    await ensureLogoBase64();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+
+    const marginLeft = 10, marginTop = 15, marginRight = 10, marginBottom = 18;
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    const header = (data)=>{
+      // título à esquerda
+      doc.setFont('helvetica','bold'); doc.setFontSize(14);
+      doc.text('Controle de Objetos Cortantes', marginLeft, marginTop);
+      // logo à direita
+      if(LOGO_B64){ try{ const imgW=32; const imgH=imgW*0.45; doc.addImage(LOGO_B64, 'PNG', pageWidth - marginRight - imgW, marginTop-8, imgW, imgH); }catch(e){} }
+      // linha
+      doc.setDrawColor(200); doc.line(marginLeft, marginTop+4, pageWidth - marginRight, marginTop+4);
     };
-    document.getElementById('btnExportCsv').onclick = exportCsv;
 
-    // ====== Boot ======
-    window.addEventListener('DOMContentLoaded', ()=>{
-      // JSON
-      carregarJsonInicial();
-      // Predefine a planilha de relatórios
-      document.getElementById('sheetId').value = DEFAULT_SHEET_ID;
-      document.getElementById('sheetTab').value = DEFAULT_SHEET_TAB;
+    const footer = (data)=>{
+      const y = doc.internal.pageSize.getHeight() - marginBottom + 4;
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      const gen = 'Gerado em: '+fmtDateBR(new Date());
+      doc.text(gen, marginLeft, y);
+      const l2 = 'Caterair Serviços de Bordo e Hotelaria Ltda - Base GIG';
+      const l3 = 'CNPJ 33.375.601/0001-38';
+      const l4 = 'Rua P, S/N, Área de Apoio do Aeroporto Internacional do Rio de Janeiro - RJ';
+      doc.text(l2, marginLeft, y+4);
+      doc.text(l3, marginLeft, y+8);
+      doc.text(l4, marginLeft, y+12);
+    };
+
+    const body = pares.map(r=> [r.matricula||'', r.funcionario||'', r.setorObjeto||'', r.objeto||'', r.dtRet?fmtDateBR(r.dtRet):'', r.dtDev?fmtDateBR(r.dtDev):'']);
+
+    header();
+    doc.autoTable({
+      head: [['Matrícula','Funcionário','Setor do Objeto','Objeto','Data/Hora Retirada','Data/Hora Devolução']],
+      body,
+      startY: marginTop + 8,
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor:[45,55,72] },
+      margin: { left: marginLeft, right: marginRight, bottom: marginBottom },
+      didDrawPage: function(data){ footer(data); }
     });
 
+    doc.save('controle_objetos.pdf');
+  }
+
+  // ================= Fluxo principal =================
+  let eventosOriginais = []; // todos os eventos lidos (todas as abas informadas)
+
+  async function atualizar(){
+    try{
+      document.getElementById('lblSheet').textContent = SHEET_ID; document.getElementById('lblAba').textContent = SHEET_TABS.join(', ');
+      // 1) carregar JSON para o mapa de objetos->setor (se ainda não)
+      if(!PLANILHA || !PLANILHA.objetos) await carregarJSON();
+
+      // 2) ler abas
+      let eventos=[];
+      for(const tab of SHEET_TABS){
+        const rows = await lerAba(tab); if(!rows.length) continue;
+        const headers = rows[0]; const idx = mapCols(headers);
+        rows.slice(1).forEach(r=>{
+          const objeto = idx.objeto!=null ? (r[idx.objeto]||'').trim() : '';
+          if(!objeto) return;
+          const setorObjeto = OBJ_TO_SETOR.get(objeto) || '';
+          const funcionario = idx.funcionario!=null ? (r[idx.funcionario]||'').trim() : '';
+          const matricula   = idx.matricula!=null   ? (r[idx.matricula]||'').trim()   : '';
+          const tipoAcao    = idx.tipoAcao!=null    ? (r[idx.tipoAcao]||'').trim()    : '';
+          const detalhe     = idx.detalhe!=null     ? (r[idx.detalhe]||'').trim()     : '';
+          const carimbo     = idx.timestamp!=null   ? (r[idx.timestamp]||'').trim()   : (idx.carimbo!=null ? (r[idx.carimbo]||'').trim() : '');
+          const data        = parseAnyDateBRorISO(carimbo);
+          eventos.push({objeto, setorObjeto, funcionario, matricula, tipoAcao, detalhe, data});
+        });
+      }
+      eventosOriginais = eventos;
+
+      document.getElementById('lblTotal').textContent = eventosOriginais.length;
+
+      // 3) aplicar filtros e construir pares
+      const filtrados = aplicaFiltrosEventos(eventosOriginais);
+      const pares = construirPares(filtrados);
+      renderTabela(pares);
+
+      // binds export
+      document.getElementById('btnCSV').onclick = ()=> exportCSV(pares);
+      document.getElementById('btnPDF').onclick = ()=> exportPDF(pares);
+
+    }catch(e){ console.error(e); alert('Falha ao atualizar: '+e.message+'\nVerifique se a planilha está compartilhada como "Qualquer pessoa com o link" (leitura).'); }
+  }
+
+  document.getElementById('btnAtualizar').addEventListener('click', atualizar);
+
+  // Logo via input
+  document.getElementById('logoInput').addEventListener('change', async (ev)=>{
+    const f = ev.target.files && ev.target.files[0]; if(!f) return; const b64 = await blobToBase64(f); LOGO_B64=b64; const img=document.getElementById('logoPreview'); img.src=b64; img.classList.remove('hidden');
+  });
+
+  // tenta carregar logo.png automaticamente
+  ensureLogoBase64();
+
+  // primeira atualização
+  atualizar();
   </script>
 </body>
 </html>

@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>KnifeControl Usuário — Google Forms (JSON + formResponse)</title>
+  <title>KnifeControl Usuário — Google Forms (sem campo Setor)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{box-sizing:border-box;margin:0;padding:0;}
-    .fade-in{animation:fadeIn .25s ease-in;}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-    .badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:9999px;font-size:12px;}
-    .badge-green{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;}
-    .badge-red{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
-    .badge-yellow{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+    body{box-sizing:border-box;margin:0;padding:0;background:#f5f7fb}
+    .fade-in{animation:fadeIn .25s ease-in;}@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:9999px;font-size:12px}
+    .badge-green{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+    .badge-red{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+    .badge-yellow{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
   </style>
 </head>
-<body class="bg-gray-100">
-
+<body>
   <!-- LOGIN -->
   <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
@@ -25,22 +23,18 @@
           <h1 class="text-3xl font-bold text-gray-800 mb-2">🔪 KnifeControl</h1>
           <p class="text-gray-600 mt-2">Sistema de Controle — <span class="font-semibold">Google Forms integrado</span></p>
         </div>
-
         <form id="loginForm" class="space-y-6">
           <div>
-            <label for="setor" class="block text-sm font-medium text-gray-700 mb-2">Setor</label>
+            <label for="setor" class="block text-sm font-medium text-gray-700 mb-2">Setor (do objeto)</label>
             <select id="setor" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="">Carregando setores...</option>
             </select>
           </div>
-
           <div>
             <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">Senha do setor</label>
             <input type="password" id="senha" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite a senha do setor"/>
           </div>
-
           <div id="connectionStatus" class="text-center text-sm"><span class="badge">Carregando planilha.json...</span></div>
-
           <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105 shadow-lg">Entrar</button>
         </form>
       </div>
@@ -56,35 +50,22 @@
           <p class="text-gray-600" id="setorAtual">Setor: </p>
         </div>
       </div>
-
       <div class="space-y-4">
         <button onclick="showScreen('retiradaScreen')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📤</div>
           <div class="text-xl font-bold">Retirada de Objeto</div>
         </button>
-
         <button onclick="showScreen('devolucaoScreen')" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📥</div>
           <div class="text-xl font-bold">Devolução de Objeto</div>
         </button>
-
         <button onclick="showScreen('inventarioScreen')" class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105">
           <div class="text-4xl mb-2">📋</div>
           <div class="text-xl font-bold">Inventário de Fim de Turno</div>
         </button>
-
-        <!-- Botões de Diagnóstico -->
-        <button onclick="enviarDiagnostico()" class="w-full bg-slate-800 text-white p-4 rounded-xl hover:bg-black transition duration-300">
-          🧪 Enviar amostra ao Forms (diagnóstico)
-        </button>
-
-        <button onclick="lerStatusDiagnostico()" class="w-full bg-slate-200 text-slate-800 p-4 rounded-xl hover:bg-slate-300 transition duration-300">
-          🔄 Ler status agora (duas abas do Sheets)
-        </button>
-
-        <button onclick="logout()" class="w-full bg-gray-200 text-gray-700 p-4 rounded-xl hover:bg-gray-300 transition duration-300 mt-2">
-          <div class="text-sm font-semibold">🚪 Sair</div>
-        </button>
+        <button onclick="enviarDiagnostico()" class="w-full bg-slate-800 text-white p-4 rounded-xl hover:bg-black transition duration-300">🧪 Enviar amostra ao Forms</button>
+        <button onclick="lerStatusDiagnostico()" class="w-full bg-slate-200 text-slate-800 p-4 rounded-xl hover:bg-slate-300 transition duration-300">🔄 Ler status agora</button>
+        <button onclick="logout()" class="w-full bg-gray-200 text-gray-700 p-4 rounded-xl hover:bg-gray-300 transition duration-300 mt-2"><span class="text-sm font-semibold">🚪 Sair</span></button>
       </div>
     </div>
   </div>
@@ -94,24 +75,20 @@
     <div class="max-w-md mx-auto">
       <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📤</span> Retirada de Objeto</h2>
-
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula do Funcionário:</label>
           <input type="text" id="matriculaRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula" />
           <button onclick="identificarPorMatricula('retirada')" class="mt-2 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
         </div>
-
         <div id="funcionarioInfoRetirada" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
         <div id="leituraInfoRetirada" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
-
         <div id="objetoSelectionRetirada" class="hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o Objeto:</label>
           <select id="objetoRetirada" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4">
             <option value="">Selecione um objeto...</option>
           </select>
-          <button onclick="confirmarRetirada()" class="mt-3 w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duração-300">Confirmar Retirada</button>
+          <button onclick="confirmarRetirada()" class="mt-3 w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Confirmar Retirada</button>
         </div>
-
         <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
     </div>
@@ -122,14 +99,9 @@
     <div class="max-w-md mx-auto">
       <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📥</span> Devolução de Objeto</h2>
-
         <div id="listaDevolucao" class="space-y-2"></div>
         <p id="msgSemEmUso" class="hidden text-sm text-gray-500">Não há objetos em uso neste setor.</p>
-
-        <button id="btnConfirmaDevolucao" onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 mt-3 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed" disabled>
-          Confirmar Devolução
-        </button>
-
+        <button id="btnConfirmaDevolucao" onclick="confirmarDevolucao()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 mt-3 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed" disabled>Confirmar Devolução</button>
         <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
     </div>
@@ -140,26 +112,21 @@
     <div class="max-w-md mx-auto">
       <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center"><span class="mr-2">📋</span> Inventário de Fim de Turno</h2>
-
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Matrícula do Funcionário:</label>
           <input type="text" id="matriculaInventario" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite a matrícula" />
           <button onclick="identificarPorMatricula('inventario')" class="mt-2 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">Identificar</button>
         </div>
-
         <div id="funcionarioInfoInventario" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-4"></div>
         <div id="leituraInfoInventario" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-gray-700"></div>
-
         <div id="statusObjetosInventario" class="hidden mb-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-3">Objetos do setor e status atual:</h3>
           <div id="listaObjetosInventario" class="space-y-2"></div>
           <div id="inventarioAviso" class="mt-2"></div>
         </div>
-
         <div id="inventarioActions" class="hidden">
           <button id="btnFinalizarInventario" onclick="finalizarInventario()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed">Finalizar Inventário</button>
         </div>
-
         <button onclick="voltarMenu()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 mt-4">← Voltar ao Menu</button>
       </div>
     </div>
@@ -185,36 +152,33 @@
     <div id="toastContent" class="rounded-xl shadow-2xl p-4 transform transition-all"></div>
   </div>
 
-  <!-- IFRAME oculto para post ao Forms -->
+  <!-- IFRAME oculto -->
   <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-  /* =================== CONFIG DO GOOGLE FORMS =================== */
-  const GOOGLE_FORM_URL =
-    'https://docs.google.com/forms/u/0/d/e/1FAIpQLScKBnRZ2StGX5qIqGVPrsXbt-hTbTawDYWqR3iEELCq9of7Xw/formResponse';
-
+  /* ======= CONFIG FORMS (sem campo Setor) ======= */
+  const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScKBnRZ2StGX5qIqGVPrsXbt-hTbTawDYWqR3iEELCq9of7Xw/formResponse';
   const FORMS_FIELDS = {
     objeto:      'entry.587663124',
     matricula:   'entry.360956002',
     funcionario: 'entry.245251034',
-    setor:       'entry.431322508',
     timestamp:   'entry.2072805918',
     tipoAcao:    'entry.2075298705',
     detalhe:     'entry.1169418597'
   };
 
-  /* =================== CONFIG DO SHEETS (LEITURA) =================== */
-  const SHEET_ID   = '1k3K5NBme5EklfF4o_yfSCJzTSXrXFA2AKdFFvnkeMcE';
-  const SHEET_TABS = ['Respostas ao formulário 3', 'Respostas ao formulário 1'];
+  /* ======= PLANILHA (para leitura de status) ======= */
+  const SHEET_ID   = '1k7824Hngs2ztGzeenK2ZDfBebQOdTOCUQMOWNUpGwQY';
+  const SHEET_TABS = ['Respostas ao formulário 1'];
 
-  /* =================== ESTADO =================== */
+  /* ======= ESTADO ======= */
   let PLANILHA = { setores:[], setoresSenha:{}, objetos:{}, funcionarios:[] };
   let currentSetor = '';
   let currentFuncionario = null;
   let objetoSelecionadoDevolucao = null;
-  let statusPorObjeto = {}; // { objeto: {status, nome, matricula, data} }
+  let statusPorObjeto = {};
 
-  /* =================== HELPERS =================== */
+  /* ======= HELPERS ======= */
   function showToast(message, type='success'){
     const toast=document.getElementById('toast');
     const toastContent=document.getElementById('toastContent');
@@ -222,8 +186,7 @@
     const icon= type==='success'? '✅':'❌';
     toastContent.className=`rounded-xl shadow-2xl p-4 text-white ${bg}`;
     toastContent.innerHTML=`<div class="flex items-center space-x-3"><div class="text-2xl">${icon}</div><div class="flex-1 font-semibold">${message}</div></div>`;
-    toast.classList.remove('hidden');
-    setTimeout(()=>toast.classList.add('hidden'),3200);
+    toast.classList.remove('hidden'); setTimeout(()=>toast.classList.add('hidden'),3200);
   }
   function formatTimestampBR(d=new Date()){
     const p=n=> String(n).padStart(2,'0');
@@ -239,7 +202,7 @@
   function voltarMenu(){ currentFuncionario=null; objetoSelecionadoDevolucao=null; showScreen('mainMenu'); }
   function logout(){ currentSetor=''; currentFuncionario=null; objetoSelecionadoDevolucao=null; document.getElementById('senha').value=''; document.getElementById('setor').value=''; showScreen('loginScreen'); }
 
-  /* =================== JSON (planilha.json) =================== */
+  /* ======= JSON (planilha.json) ======= */
   async function carregarPlanilha(){
     try{
       const res = await fetch('planilha.json', { cache:'no-store' });
@@ -257,8 +220,7 @@
     }
   }
   function loadSetores(){
-    const sel=document.getElementById('setor');
-    sel.innerHTML='<option value="">Selecione um setor...</option>';
+    const sel=document.getElementById('setor'); sel.innerHTML='<option value="">Selecione um setor...</option>';
     const lista = (PLANILHA.setores && PLANILHA.setores.length ? PLANILHA.setores : Object.keys(PLANILHA.objetos||{}));
     lista.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
   }
@@ -274,7 +236,7 @@
     await carregarStatusSetorAtual();
   });
 
-  /* =================== FUNCIONÁRIO =================== */
+  /* ======= FUNCIONÁRIO ======= */
   function identificarPorMatricula(ctx){
     const inputId=(ctx==='retirada')?'matriculaRetirada':'matriculaInventario';
     const m=(document.getElementById(inputId).value||'').trim();
@@ -295,14 +257,14 @@
     }
   }
 
-  /* =================== OBJETOS =================== */
+  /* ======= OBJETOS ======= */
   function objetosDoSetorAtual(){ return PLANILHA.objetos?.[currentSetor] || []; }
   function loadObjetosDisponiveis(){
     const sel=document.getElementById('objetoRetirada'); sel.innerHTML='<option value="">Selecione um objeto...</option>';
     objetosDoSetorAtual().forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
   }
 
-  /* =================== DEVOLUÇÃO =================== */
+  /* ======= DEVOLUÇÃO ======= */
   function montarDevolucao(){
     const wrap=document.getElementById('listaDevolucao');
     const btn=document.getElementById('btnConfirmaDevolucao');
@@ -313,26 +275,19 @@
     const emUso=Object.entries(statusPorObjeto).filter(([obj,info])=> objsSetor.has(obj) && info?.status==='Em Uso');
     if(emUso.length===0){ msg.classList.remove('hidden'); return; }
 
-    wrap.addEventListener('change',ev=>{
-      if(ev.target && ev.target.name==='dev_obj'){
-        objetoSelecionadoDevolucao=ev.target.value; btn.disabled=!objetoSelecionadoDevolucao;
-      }
-    }, { once:true });
+    wrap.addEventListener('change',ev=>{ if(ev.target && ev.target.name==='dev_obj'){ objetoSelecionadoDevolucao=ev.target.value; btn.disabled=!objetoSelecionadoDevolucao; } }, { once:true });
 
     emUso.forEach(([obj,info],idx)=>{
       const id='dev_'+idx;
       const row=document.createElement('label'); row.className='flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
-      row.innerHTML = `
-        <input type="radio" name="dev_obj" id="${id}" value="${obj}" class="mt-1.5"/>
-        <div class="flex-1">
-          <div class="font-semibold text-gray-800">${obj}</div>
-          <div class="text-xs text-gray-600">em uso por <b>${info.nome||info.matricula||'?'} </b> em ${formatTimestampBR(new Date(info.data||Date.now()))}</div>
-        </div>`;
+      row.innerHTML = `<input type="radio" name="dev_obj" id="${id}" value="${obj}" class="mt-1.5"/>`+
+        `<div class="flex-1"><div class="font-semibold text-gray-800">${obj}</div>`+
+        `<div class="text-xs text-gray-600">em uso por <b>${info.nome||info.matricula||'?'}</b> em ${formatTimestampBR(new Date(info.data||Date.now()))}</div></div>`;
       wrap.appendChild(row);
     });
   }
 
-  /* =================== INVENTÁRIO =================== */
+  /* ======= INVENTÁRIO ======= */
   function prepararInventario(){
     const container=document.getElementById('listaObjetosInventario');
     const statusDiv=document.getElementById('statusObjetosInventario');
@@ -351,9 +306,9 @@
       const info=statusPorObjeto[nome];
       const emUso=info && info.status==='Em Uso'; if(emUso) algumEmUso=true;
       const badge = emUso? '<span class="badge badge-yellow">Em Uso</span>' : '<span class="badge badge-green">Devolvido</span>';
-      const extra = emUso? `<div class='text-xs text-gray-600'>por <b>${info.nome||info.matricula||'?'} </b> em ${formatTimestampBR(new Date(info.data||Date.now()))}</div>` : '';
+      const extra = emUso? `<div class='text-xs text-gray-600'>por <b>${info.nome||info.matricula||'?'}</b> em ${formatTimestampBR(new Date(info.data||Date.now()))}</div>` : '';
       const row=document.createElement('div'); row.className='flex items-start justify-between p-3 border border-gray-200 rounded-lg';
-      row.innerHTML = `<div class=\"font-semibold text-gray-800\">${nome}</div><div class=\"text-right\">${badge}${extra? `<div>${extra}</div>`:''}</div>`;
+      row.innerHTML = `<div class="font-semibold text-gray-800">${nome}</div><div class="text-right">${badge}${extra? `<div>${extra}</div>`:''}</div>`;
       container.appendChild(row);
     });
 
@@ -363,308 +318,79 @@
     else { btn.disabled=false; avisoDiv.innerHTML='<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-2">Todos os objetos estão <b>Devolvidos</b>. Você pode finalizar.</div>'; }
   }
 
-  /* =================== ENVIO AO FORMS =================== */
-  function postToForms({ objeto, matricula, funcionario, setor, acao, detalhe, timestampBR }){
-    const form=document.createElement('form');
-    form.action=GOOGLE_FORM_URL;
-    form.method='POST';
-    form.target='hidden_iframe';
-
+  /* ======= ENVIO AO FORMS (SEM SETOR) ======= */
+  function postToForms({ objeto, matricula, funcionario, acao, detalhe, timestampBR }){
+    const form=document.createElement('form'); form.action=GOOGLE_FORM_URL; form.method='POST'; form.target='hidden_iframe';
     const add=(name,val)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=name; i.value=val||''; form.appendChild(i); };
-
     add(FORMS_FIELDS.objeto,      objeto||'');
     add(FORMS_FIELDS.matricula,   matricula||'');
     add(FORMS_FIELDS.funcionario, funcionario||'');
-    add(FORMS_FIELDS.setor,       setor||'');              // setor do login (setor do objeto)
     add(FORMS_FIELDS.timestamp,   timestampBR||formatTimestampBR());
-
-    if(acao)    add(FORMS_FIELDS.tipoAcao, acao);         // rótulos exatos
+    if(acao)    add(FORMS_FIELDS.tipoAcao, acao);
     if(detalhe) add(FORMS_FIELDS.detalhe,  detalhe);
-
     add('fvv','1'); add('pageHistory','0'); add('fbzx', String(Math.random()).slice(2));
-
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+    document.body.appendChild(form); form.submit(); document.body.removeChild(form);
   }
 
-  /* =================== AÇÕES =================== */
+  /* ======= AÇÕES ======= */
   function confirmarRetirada(){
     const objeto=(document.getElementById('objetoRetirada').value||'').trim();
     if(!objeto){ showToast('Selecione um objeto do dropdown','error'); return; }
     if(!currentFuncionario){ showToast('Identifique o funcionário','error'); return; }
-
-    const nome=currentFuncionario.nome;
-    const mat =currentFuncionario.id;
-    const setor=currentSetor;
-    const ts  =formatTimestampBR();
-
+    const nome=currentFuncionario.nome; const mat=currentFuncionario.id; const ts=formatTimestampBR();
     showConfirm(`Confirma a retirada de "${objeto}"?`, ()=>{
-      postToForms({ objeto, matricula:mat, funcionario:nome, setor, acao:'Retirada', detalhe:'Em Uso', timestampBR:ts });
+      postToForms({ objeto, matricula:mat, funcionario:nome, acao:'Retirada', detalhe:'Em Uso', timestampBR:ts });
       statusPorObjeto[objeto]={ status:'Em Uso', nome, matricula:mat, data:new Date() };
-      showToast('Retirada registrado!'); voltarMenu();
+      showToast('Retirada registrada!'); voltarMenu();
     });
   }
-
   function confirmarDevolucao(){
     if(!objetoSelecionadoDevolucao){ showToast('Selecione um objeto em uso','error'); return; }
-    const objeto=objetoSelecionadoDevolucao;
-    const info  =statusPorObjeto[objeto]||{};
-    const setor =currentSetor;
-    const ts    =formatTimestampBR();
-
+    const objeto=objetoSelecionadoDevolucao; const info=statusPorObjeto[objeto]||{}; const ts=formatTimestampBR();
     showConfirm(`Confirmar devolução de "${objeto}"?`, ()=>{
-      postToForms({ objeto, matricula:info.matricula||'', funcionario:info.nome||'', setor, acao:'Devolução', detalhe:'Devolvido', timestampBR:ts });
+      postToForms({ objeto, matricula:info.matricula||'', funcionario:info.nome||'', acao:'Devolução', detalhe:'Devolvido', timestampBR:ts });
       statusPorObjeto[objeto]={ status:'Devolvido', nome:'', matricula:'', data:new Date() };
       showToast('Devolução registrada!'); montarDevolucao();
     });
   }
-
   function finalizarInventario(){
     if(!currentFuncionario){ showToast('Identifique o funcionário','error'); return; }
-    const lista=objetosDoSetorAtual();
-    const algumEmUso=lista.some(o=> statusPorObjeto[o]?.status==='Em Uso');
+    const lista=objetosDoSetorAtual(); const algumEmUso=lista.some(o=> statusPorObjeto[o]?.status==='Em Uso');
     if(algumEmUso){ showToast('Há objeto(s) Em Uso. Bloqueado.','error'); return; }
-
-    const nome=currentFuncionario.nome;
-    const mat =currentFuncionario.id;
-    const setor=currentSetor;
-    const ts  =formatTimestampBR();
-
+    const nome=currentFuncionario.nome; const mat=currentFuncionario.id; const ts=formatTimestampBR();
     showConfirm('Finalizar inventário (todos como Devolvido)?', ()=>{
       lista.forEach(objeto=>{
-        postToForms({ objeto, matricula:mat, funcionario:nome, setor, acao:'Inventário de Final de Turno', detalhe:'Devolvido', timestampBR:ts });
+        postToForms({ objeto, matricula:mat, funcionario:nome, acao:'Inventário de Final de Turno', detalhe:'Devolvido', timestampBR:ts });
         statusPorObjeto[objeto]={ status:'Devolvido', nome:'', matricula:'', data:new Date() };
       });
       showToast('Inventário finalizado!'); voltarMenu();
     });
   }
 
-  /* =================== MODAL =================== */
-  let confirmCallback=null;
-  function showConfirm(msg, cb){
-    const m=document.getElementById('confirmModal');
-    document.getElementById('confirmMessage').textContent=msg;
-    m.classList.remove('hidden');
-    confirmCallback=cb;
-    document.getElementById('confirmButton').onclick=()=>{ m.classList.add('hidden'); if(confirmCallback){ confirmCallback(); confirmCallback=null; } };
-  }
+  /* ======= MODAL ======= */
+  let confirmCallback=null; function showConfirm(msg, cb){ const m=document.getElementById('confirmModal'); document.getElementById('confirmMessage').textContent=msg; m.classList.remove('hidden'); confirmCallback=cb; document.getElementById('confirmButton').onclick=()=>{ m.classList.add('hidden'); if(confirmCallback){ confirmCallback(); confirmCallback=null; } }; }
   function cancelConfirm(){ document.getElementById('confirmModal').classList.add('hidden'); confirmCallback=null; }
 
-  /* =================== CSV / MAPEAMENTO =================== */
-  function csvToRows(text){
-    const rows=[]; let i=0, cur=[], field='', inQuotes=false;
-    while(i<text.length){
-      const c=text[i];
-      if(c === '"'){ if(inQuotes && text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=!inQuotes; } }
-      else if(c===',' && !inQuotes){ cur.push(field); field=''; }
-      else if((c==='\n'||c==='\r') && !inQuotes){ if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); cur=[]; field=''; } }
-      else { field+=c; }
-      i++;
-    }
-    if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); }
-    return rows.filter(r=> r.length>1 || (r.length===1 && r[0].trim()!==''));
-  }
-  function normalize(h){ return (h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-  function mapCols(headers){
-    const idx={};
-    headers.forEach((h,i)=>{
-      const n=normalize(h);
-      if(n.includes('objeto')) idx.objeto=i;
-      else if(n.includes('matric')) idx.matricula=i;
-      else if(n.includes('funcion')) idx.funcionario=i;
-      else if(n.includes('setor')) idx.setor=i;
-      else if(n.includes('timestamp')||n.includes('data')||n.includes('hora')) idx.timestamp=i;
-      else if(n.includes('em uso')) idx.emUso=i;
-      else if(n.includes('devolvido')) idx.devolvido=i;
-      else if(n==='status') idx.status=i;
-      else if(n.includes('tipo de ação')||n.includes('tipo de acao')) idx.tipoAcao=i;
-      else if(n.includes('detalhe')) idx.detalhe=i;
-    });
-    return idx;
-  }
+  /* ======= CSV/Mapeamento p/ leitura ======= */
+  function csvToRows(text){ const rows=[]; let i=0, cur=[], field='', inQ=false; while(i<text.length){ const c=text[i]; if(c==='"'){ if(inQ && text[i+1]==='"'){ field+='"'; i++; } else { inQ=!inQ; } } else if(c===',' && !inQ){ cur.push(field); field=''; } else if((c==='\n'||c==='\r')&&!inQ){ if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); cur=[]; field=''; } } else { field+=c; } i++; } if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); } return rows.filter(r=> r.length>1 || (r.length===1 && r[0].trim()!=='') ); }
+  function normalize(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function mapCols(headers){ const idx={}; headers.forEach((h,i)=>{ const n=normalize(h); if(n.includes('objeto')) idx.objeto=i; else if(n.includes('matric')) idx.matricula=i; else if(n.includes('funcion')) idx.funcionario=i; else if(n.includes('carimbo')) idx.carimbo=i; else if(n.includes('timestamp')||n.includes('data')&&n.includes('hora')) idx.timestamp=i; else if(n.includes('tipo de ação')||n.includes('tipo de acao')) idx.tipoAcao=i; else if(n.includes('detalhe')) idx.detalhe=i; }); return idx; }
 
-  /* =================== LEITURA DO SHEETS (duas abas) =================== */
   async function carregarStatusSetorAtual(){
-    statusPorObjeto = {};
-    const registros = [];
-
-    for (const tab of SHEET_TABS){
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-      try{
-        const res = await fetch(url);
-        if(!res.ok) continue;
-        const text = await res.text();
-        const rows = csvToRows(text);
-        if(!rows.length) continue;
-
-        const headers = rows[0];
-        const idx     = mapCols(headers);
-
-        rows.slice(1).forEach(r=>{
-          const setor = idx.setor!=null ? (r[idx.setor]||'') : '';
-          if(setor !== currentSetor) return;
-
-          const objeto = idx.objeto!=null ? (r[idx.objeto]||'') : '';
-          if(!objeto) return;
-
-          // Timestamp
-          let data=null;
-          if(idx.timestamp!=null){
-            const raw=(r[idx.timestamp]||'').trim();
-            const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/);
-            if(m){ const [_,dd,mm,yyyy,HH,MM,SS]=m; data=new Date(`${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`); }
-            else { const d1=new Date(raw); if(!isNaN(d1)) data=d1; }
-          }
-
-          // Status
-          let status='';
-          if(idx.tipoAcao!=null){
-            const acao=(r[idx.tipoAcao]||'').trim();
-            if(acao==='Retirada') status='Em Uso';
-            else if(acao==='Devolução') status='Devolvido';
-            else if(acao==='Inventário de Final de Turno') status='Devolvido';
-          }
-          if(!status && idx.status!=null) status=(r[idx.status]||'').trim();
-          if(!status){
-            const vEmUso = idx.emUso!=null? String(r[idx.emUso]||'').toLowerCase() : '';
-            const vDev   = idx.devolvido!=null? String(r[idx.devolvido]||'').toLowerCase() : '';
-            if(vEmUso.includes('em uso') || vEmUso==='true'||vEmUso==='1'||vEmUso==='x') status='Em Uso';
-            else if(vDev.includes('devolvido') || vDev==='true'||vDev==='1'||vDev==='x') status='Devolvido';
-          }
-
-          registros.push({
-            setor,
-            objeto,
-            status,
-            matricula:   idx.matricula!=null ? (r[idx.matricula]||'') : '',
-            funcionario: idx.funcionario!=null ? (r[idx.funcionario]||'') : '',
-            data
-          });
-        });
-
-      }catch(e){
-        console.warn('Falha ao ler aba', tab, e);
-      }
-    }
-
-    const map = new Map();
-    for(const r of registros){
-      const cur = map.get(r.objeto);
-      if(!cur || (r.data && (!cur.data || r.data>cur.data))) map.set(r.objeto, r);
-    }
-    map.forEach(v=>{
-      statusPorObjeto[v.objeto] = { status: v.status, nome: v.funcionario, matricula: v.matricula, data: v.data };
-    });
+    statusPorObjeto = {}; const registros=[]; const objsSet = new Set(objetosDoSetorAtual());
+    for(const tab of SHEET_TABS){ const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`; try{ const res=await fetch(url); if(!res.ok) continue; const text=await res.text(); const rows=csvToRows(text); if(!rows.length) continue; const headers=rows[0]; const idx=mapCols(headers); rows.slice(1).forEach(r=>{ const objeto=idx.objeto!=null?(r[idx.objeto]||''):''; if(!objeto||!objsSet.has(objeto)) return; let data=null; const raw = idx.timestamp!=null?(r[idx.timestamp]||''): (idx.carimbo!=null?(r[idx.carimbo]||''): ''); const m=String(raw).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/); if(m){ const[_,dd,mm,yyyy,HH,MM,SS]=m; data=new Date(`${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`);} else { const d1=new Date(raw); if(!isNaN(d1)) data=d1; }
+      let status=''; if(idx.tipoAcao!=null){ const acao=(r[idx.tipoAcao]||'').trim(); if(acao==='Retirada') status='Em Uso'; else if(acao==='Devolução') status='Devolvido'; else if(acao==='Inventário de Final de Turno') status='Devolvido'; }
+      registros.push({ objeto, status, nome: idx.funcionario!=null?(r[idx.funcionario]||''):'', matricula: idx.matricula!=null?(r[idx.matricula]||''):'', data }); }); }catch(e){ console.warn('Falha ao ler',tab,e); } }
+    const map=new Map(); for(const r of registros){ const cur=map.get(r.objeto); if(!cur || (r.data && (!cur.data || r.data>cur.data))) map.set(r.objeto,r); }
+    map.forEach(v=>{ statusPorObjeto[v.objeto]={ status:v.status, nome:v.nome, matricula:v.matricula, data:v.data }; });
   }
 
-  /* =================== DIAGNÓSTICO (botões) =================== */
-  function enviarDiagnostico(){
-    try{
-      const setor = currentSetor || (PLANILHA.setores && PLANILHA.setores[0]) || Object.keys(PLANILHA.objetos||{})[0] || 'Teste';
-      const objeto = (PLANILHA.objetos?.[setor]||[])[0] || 'DIAGNOSTICO_TESTE';
-      const matricula   = (PLANILHA.funcionarios?.[0]?.matricula) || '00000';
-      const funcionario = (PLANILHA.funcionarios?.[0]?.nome)      || 'DIAGNOSTICO';
-      const tsBR = formatTimestampBR();
+  /* ======= Diagnóstico ======= */
+  function enviarDiagnostico(){ try{ const setor=currentSetor || (PLANILHA.setores && PLANILHA.setores[0]) || Object.keys(PLANILHA.objetos||{})[0] || 'Teste'; const objeto=(PLANILHA.objetos?.[setor]||[])[0] || 'DIAGNOSTICO_TESTE'; const matricula=(PLANILHA.funcionarios?.[0]?.matricula)||'00000'; const funcionario=(PLANILHA.funcionarios?.[0]?.nome)||'DIAGNOSTICO'; const ts=formatTimestampBR(); const form=document.createElement('form'); form.action=GOOGLE_FORM_URL; form.method='POST'; form.target='hidden_iframe'; const add=(n,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v||''; form.appendChild(i); }; add(FORMS_FIELDS.objeto,objeto); add(FORMS_FIELDS.matricula,matricula); add(FORMS_FIELDS.funcionario,funcionario); add(FORMS_FIELDS.timestamp,ts); add(FORMS_FIELDS.tipoAcao,'Retirada'); add(FORMS_FIELDS.detalhe,'Em Uso'); add('fvv','1'); add('pageHistory','0'); add('fbzx', String(Math.random()).slice(2)); document.body.appendChild(form); form.submit(); document.body.removeChild(form); showToast('🧪 Amostra enviada. Aguarde ~10s e verifique o Forms/Sheets.'); }catch(e){ showToast('Falha no diagnóstico: '+e.message,'error'); console.error(e); } }
 
-      const form = document.createElement('form');
-      form.action = GOOGLE_FORM_URL;
-      form.method = 'POST';
-      form.target = 'hidden_iframe';
-      const add=(name,val)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=name; i.value=val||''; form.appendChild(i); };
+  async function lerStatusDiagnostico(){ if(!currentSetor){ showToast('Faça login (defina o setor)','error'); return; } let total=0; let itens=[]; const objsSet=new Set(objetosDoSetorAtual()); for(const tab of SHEET_TABS){ try{ const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`; const res=await fetch(url); if(!res.ok) continue; const text=await res.text(); const rows=csvToRows(text); if(!rows.length) continue; const headers=rows[0]; const idx=mapCols(headers); rows.slice(1).forEach(r=>{ const objeto=idx.objeto!=null?(r[idx.objeto]||''):''; if(!objeto||!objsSet.has(objeto)) return; let data=null; const raw = idx.timestamp!=null?(r[idx.timestamp]||''): (idx.carimbo!=null?(r[idx.carimbo]||''): ''); const m=String(raw).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/); if(m){ const[_,dd,mm,yyyy,HH,MM,SS]=m; data=new Date(`${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`);} else { const d1=new Date(raw); if(!isNaN(d1)) data=d1; } let status=''; if(idx.tipoAcao!=null){ const acao=(r[idx.tipoAcao]||'').trim(); if(acao==='Retirada') status='Em Uso'; else if(acao==='Devolução') status='Devolvido'; else if(acao==='Inventário de Final de Turno') status='Devolvido'; } itens.push({objeto,status,data}); total++; }); }catch(e){ console.warn('diag read fail',e); } } const map=new Map(); for(const it of itens){ const cur=map.get(it.objeto); if(!cur || (it.data && (!cur.data || it.data>cur.data))) map.set(it.objeto,it); } let emUso=0, dev=0; map.forEach(v=>{ if(v.status==='Em Uso') emUso++; else if(v.status==='Devolvido') dev++; }); showToast('Diagnóstico de leitura concluído!'); alert(`🔄 Diagnóstico:\n• Abas lidas: ${SHEET_TABS.join(', ')}\n• Setor: ${currentSetor}\n• Registros lidos (bruto): ${total}\n• Objetos consolidados: ${map.size}\n   - Em Uso: ${emUso}\n   - Devolvido: ${dev}`); }
 
-      add(FORMS_FIELDS.objeto, objeto);
-      add(FORMS_FIELDS.matricula, matricula);
-      add(FORMS_FIELDS.funcionario, funcionario);
-      add(FORMS_FIELDS.setor, setor);
-      add(FORMS_FIELDS.timestamp, tsBR);
-      add(FORMS_FIELDS.tipoAcao, 'Retirada');
-      add(FORMS_FIELDS.detalhe,  'Em Uso');
-      add('fvv','1'); add('pageHistory','0'); add('fbzx', String(Math.random()).slice(2));
-
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-
-      showToast('🧪 Amostra enviada. Aguarde ~10s e verifique o Forms/Sheets.');
-    }catch(e){
-      showToast('Falha no diagnóstico: '+e.message,'error');
-      console.error(e);
-    }
-  }
-
-  async function lerStatusDiagnostico(){
-    if(!currentSetor){ showToast('Faça login (defina o setor)','error'); return; }
-
-    let totalLido = 0;
-    const itens = [];
-
-    for (const tab of SHEET_TABS){
-      try{
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-        const res = await fetch(url);
-        if(!res.ok) continue;
-        const text = await res.text();
-        const rows = csvToRows(text);
-        if(!rows.length) continue;
-
-        const headers = rows[0];
-        const idx     = mapCols(headers);
-
-        rows.slice(1).forEach(r=>{
-          const setor = idx.setor!=null ? (r[idx.setor]||'') : '';
-          if (setor !== currentSetor) return;
-          const objeto = idx.objeto!=null ? (r[idx.objeto]||'') : '';
-          if (!objeto) return;
-
-          let data=null;
-          if(idx.timestamp!=null){
-            const raw=(r[idx.timestamp]||'').trim();
-            const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/);
-            if(m){ const [_,dd,mm,yyyy,HH,MM,SS]=m; data=new Date(`${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`); }
-            else { const d1=new Date(raw); if(!isNaN(d1)) data=d1; }
-          }
-
-          let status='';
-          if(idx.tipoAcao!=null){
-            const acao=(r[idx.tipoAcao]||'').trim();
-            if(acao==='Retirada') status='Em Uso';
-            else if(acao==='Devolução') status='Devolvido';
-            else if(acao==='Inventário de Final de Turno') status='Devolvido';
-          }
-          if(!status && idx.status!=null) status=(r[idx.status]||'').trim();
-          if(!status){
-            const vEmUso = idx.emUso!=null? String(r[idx.emUso]||'').toLowerCase() : '';
-            const vDev   = idx.devolvido!=null? String(r[idx.devolvido]||'').toLowerCase() : '';
-            if(vEmUso.includes('em uso') || vEmUso==='true'||vEmUso==='1'||vEmUso==='x') status='Em Uso';
-            else if(vDev.includes('devolvido') || vDev==='true'||vDev==='1'||vDev==='x') status='Devolvido';
-          }
-
-          itens.push({ objeto, status, data });
-          totalLido++;
-        });
-
-      }catch(e){
-        console.warn('Diagnóstico: falha ao ler aba', tab, e);
-      }
-    }
-
-    const porObjeto = new Map();
-    for(const r of itens){
-      const cur=porObjeto.get(r.objeto);
-      if(!cur || (r.data && (!cur.data || r.data>cur.data))) porObjeto.set(r.objeto, r);
-    }
-
-    let emUso=0, devolvido=0;
-    porObjeto.forEach(v=>{ if(v.status==='Em Uso') emUso++; else if(v.status==='Devolvido') devolvido++; });
-
-    showToast('Diagnóstico de leitura concluído!');
-    alert(
-`🔄 Diagnóstico de leitura:\n• Abas lidas: ${SHEET_TABS.join(', ')}\n• Setor: ${currentSetor}\n• Registros lidos (bruto): ${totalLido}\n• Objetos consolidados: ${porObjeto.size}\n   - Em Uso: ${emUso}\n   - Devolvido: ${devolvido}`
-    );
-  }
-
-  /* =================== BOOT =================== */
+  /* ======= Boot ======= */
   window.addEventListener('DOMContentLoaded', ()=>{ carregarPlanilha(); });
   </script>
 </body>
