@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Objetos Cortantes — Relatórios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body{background:#f5f7fb}
+    .card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    @media(max-width:1024px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.grid{grid-template-columns:1fr}}
+    .table-wrap{overflow:auto;max-height:60vh}
+    .sticky th{position:sticky;top:0;background:#fff;z-index:1}
+  </style>
+</head>
+<body>
+  <div class="max-w-6xl mx-auto p-4">
+    <header class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Controle de Objetos Cortantes — Relatórios</h1>
+        <p class="text-gray-600 text-sm">Lendo Google Sheets + planilha.json (nome/setor)</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-gray-600">Logo (opcional)
+          <input id="logoInput" type="file" accept="image/*" class="block text-sm" />
+        </label>
+        <img id="logoPreview" class="h-10 w-auto hidden"/>
+      </div>
+    </header>
+
+    <section class="card p-4 mb-4">
+      <div class="grid">
+        <div>
+          <label class="block text-sm mb-1">Setor (do objeto)</label>
+          <select id="filtroSetor" class="w-full border rounded px-3 py-2 text-sm"><option value="">Todos</option></select>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Funcionário</label>
+          <input id="filtroFuncionario" class="w-full border rounded px-3 py-2 text-sm" placeholder="Contém..." />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Matrícula</label>
+          <input id="filtroMatricula" class="w-full border rounded px-3 py-2 text-sm" placeholder="Igual a..." />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Objeto</label>
+          <input id="filtroObjeto" class="w-full border rounded px-3 py-2 text-sm" placeholder="Contém..." />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Data inicial</label>
+          <input id="filtroDataIni" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Data final</label>
+          <input id="filtroDataFim" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Tipo de Ação</label>
+          <select id="filtroTipo" class="w-full border rounded px-3 py-2 text-sm">
+            <option value="">Todos</option>
+            <option>Retirada</option>
+            <option>Devolução</option>
+            <option>Inventário de Final de Turno</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="btnAtualizar" class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Atualizar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card p-4 mb-4">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">Registros: <span id="lblTotal">0</span> • Pares Retirada/Devolução: <span id="lblPares">0</span></div>
+        <div class="flex gap-2">
+          <button id="btnCSV" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm">Exportar CSV</button>
+          <button id="btnPDF" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">Exportar PDF (A4)</button>
+        </div>
+      </div>
+      <div class="table-wrap mt-3">
+        <table class="min-w-full text-sm">
+          <thead class="sticky">
+            <tr class="text-left">
+              <th class="px-3 py-2 border-b">Matrícula</th>
+              <th class="px-3 py-2 border-b">Funcionário</th>
+              <th class="px-3 py-2 border-b">Setor do Objeto</th>
+              <th class="px-3 py-2 border-b">Objeto</th>
+              <th class="px-3 py-2 border-b">Data/Hora Retirada</th>
+              <th class="px-3 py-2 border-b">Data/Hora Devolução</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="text-xs text-gray-500">SHEET_ID: <code id="lblSheet"></code> • Aba: <code id="lblAba"></code></section>
+  </div>
+
+  <script>
+  // ======== CONFIG ========
+  const SHEET_ID   = '1f-neTp_hpVn3wUdfiw5DuBmlsTGG4VlAcpni71EQAqI';
+  const SHEET_TABS = ['Respostas ao formulário 1'];
+
+  // ======== Helpers ========
+  function normalize(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function fmtDateBR(d){ const p=n=> String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+  function download(filename, text){ const blob = new Blob([text], {type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200); }
+
+  // ======== planilha.json (setor do objeto e nome por matrícula) ========
+  let PLANILHA={ setores:[], setoresSenha:{}, objetos:{}, funcionarios:[] };
+  let OBJ_TO_SETOR = new Map();
+  async function carregarJSON(){ const res = await fetch('planilha.json',{cache:'no-store'}); if(!res.ok) throw new Error('planilha.json não encontrado'); const j=await res.json(); PLANILHA=j||{}; OBJ_TO_SETOR=new Map(); const objetos=PLANILHA.objetos||{}; Object.keys(objetos).forEach(setor=> (objetos[setor]||[]).forEach(o=> OBJ_TO_SETOR.set(String(o), setor))); const sel=document.getElementById('filtroSetor'); sel.innerHTML='<option value="">Todos</option>'+Object.keys(objetos).map(s=>`<option>${s}</option>`).join(''); }
+
+  // ======== CSV Parser e mapeamento ========
+  function csvToRows(text){ const rows=[]; let i=0, cur=[], field='', inQ=false; while(i<text.length){ const c=text[i]; if(c==='"'){ if(inQ && text[i+1]==='"'){ field+='"'; i++; } else inQ=!inQ; } else if(c===',' && !inQ){ cur.push(field); field=''; } else if((c==='\n'||c==='\r')&&!inQ){ if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); cur=[]; field=''; } } else field+=c; i++; } if(field!==''||cur.length>0){ cur.push(field); rows.push(cur); } return rows.filter(r=> r.length>1 || (r.length===1 && r[0].trim()!=='') ); }
+  function mapCols(headers){ const idx={}; headers.forEach((h,i)=>{ const n=normalize(h); if(n.includes('objeto')) idx.objeto=i; else if(n.includes('matric')) idx.matricula=i; else if(n.includes('funcion')) idx.funcionario=i; else if(n.includes('carimbo')) idx.carimbo=i; else if(n.includes('tipo de ação')||n.includes('tipo de acao')||n.includes('tipo')) idx.tipoAcao=i; }); return idx; }
+
+  async function lerAba(tab){ const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`; const res=await fetch(url); if(!res.ok) throw new Error('Falha ao ler aba: '+tab); const csv=await res.text(); return csvToRows(csv); }
+
+  function aplicaFiltrosEventos(eventos){
+    const fSetor=document.getElementById('filtroSetor').value.trim();
+    const fFunc=normalize(document.getElementById('filtroFuncionario').value.trim());
+    const fMat=document.getElementById('filtroMatricula').value.trim();
+    const fObj=normalize(document.getElementById('filtroObjeto').value.trim());
+    const fTipo=document.getElementById('filtroTipo').value.trim();
+    const dIni=document.getElementById('filtroDataIni').value? new Date(document.getElementById('filtroDataIni').value+'T00:00:00'):null;
+    const dFim=document.getElementById('filtroDataFim').value? new Date(document.getElementById('filtroDataFim').value+'T23:59:59'):null;
+    return eventos.filter(ev=>{
+      if(fSetor && ev.setorObjeto!==fSetor) return false;
+      if(fFunc && !normalize(ev.funcionario||'').includes(fFunc)) return false;
+      if(fMat && String(ev.matricula)!==String(fMat)) return false;
+      if(fObj && !normalize(ev.objeto).includes(fObj)) return false;
+      if(fTipo && ev.tipoAcao!==fTipo) return false;
+      if(dIni && (!ev.data || ev.data<dIni)) return false;
+      if(dFim && (!ev.data || ev.data>dFim)) return false;
+      return true;
+    });
+  }
+
+  function construirPares(eventos){
+    const evs = eventos.slice().sort((a,b)=> (a.data||0)-(b.data||0));
+    const stacks = new Map(); // key=(matricula||'')+'||'+objeto
+    const pares=[]; // {matricula,funcionario,setorObjeto,objeto,dtRet,dtDev}
+    for(const ev of evs){ const key=`${ev.matricula||''}||${ev.objeto||''}`; if(ev.tipoAcao==='Retirada'){ if(!stacks.has(key)) stacks.set(key,[]); stacks.get(key).push(ev); } else if(ev.tipoAcao==='Devolução'){ const st=stacks.get(key); if(st && st.length){ const rt=st.pop(); pares.push({ matricula:ev.matricula||rt.matricula||'', funcionario:ev.funcionario||rt.funcionario||'', setorObjeto:ev.setorObjeto||rt.setorObjeto||'', objeto:ev.objeto, dtRet:rt.data||null, dtDev:ev.data||null }); } else { pares.push({ matricula:ev.matricula||'', funcionario:ev.funcionario||'', setorObjeto:ev.setorObjeto||'', objeto:ev.objeto, dtRet:null, dtDev:ev.data||null }); } } }
+    stacks.forEach(arr=> arr.forEach(rt=> pares.push({ matricula:rt.matricula||'', funcionario:rt.funcionario||'', setorObjeto:rt.setorObjeto||'', objeto:rt.objeto, dtRet:rt.data||null, dtDev:null })) );
+    return pares;
+  }
+
+  function renderTabela(pares){ const tb=document.getElementById('tbody'); tb.innerHTML=''; document.getElementById('lblPares').textContent=pares.length; for(const r of pares){ const tr=document.createElement('tr'); tr.innerHTML=`<td class='px-3 py-2 border-b'>${r.matricula||''}</td><td class='px-3 py-2 border-b'>${r.funcionario||''}</td><td class='px-3 py-2 border-b'>${r.setorObjeto||''}</td><td class='px-3 py-2 border-b'>${r.objeto||''}</td><td class='px-3 py-2 border-b'>${r.dtRet?fmtDateBR(r.dtRet):''}</td><td class='px-3 py-2 border-b'>${r.dtDev?fmtDateBR(r.dtDev):''}</td>`; tb.appendChild(tr);} }
+
+  function exportCSV(pares){ const headers=['Matricula','Funcionario','Setor do Objeto','Objeto','DataHoraRetirada','DataHoraDevolucao']; const rows=pares.map(r=>[r.matricula||'',r.funcionario||'',r.setorObjeto||'',r.objeto||'',r.dtRet?fmtDateBR(r.dtRet):'',r.dtDev?fmtDateBR(r.dtDev):'']); const csv=[headers.join(';')].concat(rows.map(a=>a.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';'))).join('\n'); download('controle_objetos.csv', csv); }
+
+  // ======== Logo opcional ========
+  let LOGO_B64=null; function blobToBase64(blob){ return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onerror=reject; fr.onload=()=>resolve(fr.result); fr.readAsDataURL(blob); }); }
+  document.getElementById('logoInput').addEventListener('change', async ev=>{ const f=ev.target.files?.[0]; if(!f) return; LOGO_B64=await blobToBase64(f); const img=document.getElementById('logoPreview'); img.src=LOGO_B64; img.classList.remove('hidden'); });
+
+  async function exportPDF(pares){ const { jsPDF } = window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); const ml=10, mt=15, mr=10, mb=18; const pageW=doc.internal.pageSize.getWidth();
+    const header=()=>{ doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text('Controle de Objetos Cortantes', ml, mt); if(LOGO_B64){ try{ const w=32,h=w*0.45; doc.addImage(LOGO_B64,'PNG', pageW-mr-w, mt-8, w, h);}catch(e){} } doc.setDrawColor(200); doc.line(ml, mt+4, pageW-mr, mt+4); };
+    const footer=()=>{ const y=doc.internal.pageSize.getHeight()-mb+4; doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text('Gerado em: '+fmtDateBR(new Date()), ml, y); doc.text('Caterair Serviços de Bordo e Hotelaria Ltda - Base GIG', ml, y+4); doc.text('CNPJ 33.375.601/0001-38', ml, y+8); doc.text('Rua P, S/N, Área de Apoio do Aeroporto Internacional do Rio de Janeiro - RJ', ml, y+12); };
+    const body = pares.map(r=>[r.matricula||'', r.funcionario||'', r.setorObjeto||'', r.objeto||'', r.dtRet?fmtDateBR(r.dtRet):'', r.dtDev?fmtDateBR(r.dtDev):'']);
+    header();
+    doc.autoTable({ head: [['Matrícula','Funcionário','Setor do Objeto','Objeto','Data/Hora Retirada','Data/Hora Devolução']], body, startY: mt+8, styles:{fontSize:9,cellPadding:2}, headStyles:{fillColor:[45,55,72]}, margin:{left:ml,right:mr,bottom:mb}, didDrawPage: ()=> footer() });
+    doc.save('controle_objetos.pdf');
+  }
+
+  // ======== Fluxo principal ========
+  let eventosOriginais=[];
+  async function atualizar(){ try{
+    document.getElementById('lblSheet').textContent=SHEET_ID; document.getElementById('lblAba').textContent=SHEET_TABS.join(', ');
+    if(!PLANILHA || !PLANILHA.objetos) await carregarJSON();
+    let eventos=[]; for(const tab of SHEET_TABS){ const rows=await lerAba(tab); if(!rows.length) continue; const headers=rows[0]; const idx=mapCols(headers); rows.slice(1).forEach(r=>{ const objeto=idx.objeto!=null?(r[idx.objeto]||'').trim():''; if(!objeto) return; const setorObjeto=OBJ_TO_SETOR.get(objeto)||''; const matricula=idx.matricula!=null?(r[idx.matricula]||'').trim():''; const funcionario=(PLANILHA.funcionarios||[]).find(x=> String(x.matricula)===String(matricula))?.nome||''; const tipoAcao=idx.tipoAcao!=null?(r[idx.tipoAcao]||'').trim():''; let data=null; if(idx.carimbo!=null){ const d1=new Date((r[idx.carimbo]||'').trim()); if(!isNaN(d1)) data=d1; } eventos.push({ objeto, setorObjeto, funcionario, matricula, tipoAcao, data }); }); }
+    eventosOriginais=eventos; document.getElementById('lblTotal').textContent=eventosOriginais.length;
+    const filtrados=aplicaFiltrosEventos(eventosOriginais); const pares=construirPares(filtrados); renderTabela(pares);
+    document.getElementById('btnCSV').onclick=()=>exportCSV(pares); document.getElementById('btnPDF').onclick=()=>exportPDF(pares);
+  }catch(e){ console.error(e); alert('Falha ao atualizar: '+e.message+'\nVerifique se a planilha permite leitura por link.'); } }
+
+  document.getElementById('btnAtualizar').addEventListener('click', atualizar);
+  carregarJSON().then(atualizar);
+  </script>
+</body>
+</html>
