@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KnifeControl — Headless (Vercel)</title>
+  <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:24px} .row{margin:8px 0}</style>
+</head>
+<body>
+  <h2>KnifeControl — Headless (Vercel)</h2>
+  <p>Este demo envia ao endpoint <code>/api/forms-submit</code>, que por sua vez faz o POST ao Google Forms.</p>
+
+  <div class="row"><label>Tipo de Ação: 
+    <select id="tipo">
+      <option>Retirada</option>
+      <option>Devolução</option>
+      <option>Inventário de Final de Turno</option>
+    </select>
+  </label></div>
+  <div class="row"><label>Matrícula: <input id="mat" value="10000"/></label></div>
+  <div class="row"><label>Objeto: <input id="obj" value="FACA TESTE"/></label></div>
+  <div class="row"><button onclick="enviar()">Enviar</button></div>
+  <pre id="out" style="background:#111;color:#0f0;padding:12px;border-radius:6px;min-height:80px"></pre>
+
+  <script>
+  async function enviar(){
+    const tipo=document.getElementById('tipo').value;
+    const matricula=document.getElementById('mat').value.trim();
+    const objeto=document.getElementById('obj').value.trim();
+    const out=document.getElementById('out');
+    out.textContent = 'Enviando...';
+    try{
+      const r = await fetch('/api/forms-submit', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ tipo, matricula, objeto /*, apiKey:'SUA-CHAVE-SE-USAR'*/ })
+      });
+      const j = await r.json();
+      out.textContent = JSON.stringify(j, null, 2);
+    }catch(e){ out.textContent = 'Erro: '+ e.message; }
+  }
+  </script>
+</body>
+</html>
