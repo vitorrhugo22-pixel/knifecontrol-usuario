@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>KnifeControl – Backend (JSON + Importador XLSX com Mescla & Validação)</title>
+  <!-- SheetJS para ler XLS/XLSX no navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{color-scheme:light dark;--bg:#0b0d10;--fg:#e5e7eb;--card:#111418;--line:#1f2937;--muted:#94a3b8;--pri:#60a5fa;--ok:#34d399;--warn:#fbbf24;--err:#f87171}
+    body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    header{padding:14px 16px;border-bottom:1px solid var(--line)}
+    h1{margin:0;font-size:16px}
+    main{max-width:1100px;margin:18px auto;padding:0 16px;display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 280px}
+    label{display:block;font-weight:700;margin:6px 0}
+    input[type=text],textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--fg)}
+    textarea{min-height:140px;font-family:ui-monospace,Consolas,monospace}
+    button{border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn{background:var(--pri);color:#001}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)} .muted{color:var(--muted)}
+    pre{background:#00000020;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;display:inline-block}
+    details summary{cursor:pointer}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .kpi > div{background:#0001;border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+    .hl{background:#fff1;border-radius:6px;padding:2px 6px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>KnifeControl – Backend (Atualizador da planilha.json + Importador XLSX com <span class="hl">Mescla</span> & <span class="hl">Validação</span>)</h1>
+  <div class="muted">Este backend é <b>estático</b>: valida e converte no navegador, e libera para <b>download</b> o novo <code>planilha.json</code>. Depois, substitua manualmente no servidor.</div>
+</header>
+<main>
+  <!-- Pré-visualização / Entrada -->
+  <section class="card">
+    <h2 style="margin:0 0 6px">Pré-visualização</h2>
+    <pre id="preview">{
+  // Cole aqui seus dados ou use ?update={...}
+}</pre>
+    <div class="row" style="margin-top:8px">
+      <div class="col">
+        <label>JSON de entrada (opcional)</label>
+        <textarea id="txtJson" placeholder='Cole um planilha.json ou use ?update={...}'></textarea>
+      </div>
+      <div class="col">
+        <label>Arquivo XLSX/XLS de Funcionários</label>
+        <input type="file" id="inpXLS" accept=".xlsx,.xls"/>
+        <div class="muted" style="margin-top:6px">Cabeçalhos esperados: <b>Matricula</b>, <b>Nome</b>, <b>Setor</b>, <b>Ativo</b> (opcional). A primeira linha deve ser o cabeçalho.</div>
+        <div class="pill" id="xlsInfo" style="margin-top:8px">Nenhum arquivo carregado.</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px;align-items:flex-end">
+      <div class="col">
+        <label>Modo de atualização (Funcionários)</label>
+        <select id="selModo">
+          <option value="merge" selected>Mesclar (atualiza/insere por Matrícula e mantém quem não está no XLSX)</option>
+          <option value="replace">Substituir (troca toda a seção Funcionários pela planilha)</option>
+        </select>
+        <label style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <input type="checkbox" id="chkManterAtivoVazio" checked/>
+          Manter valor anterior de <b>Ativo</b> quando célula estiver vazia (recomendado)
+        </label>
+      </div>
+      <div class="col">
+        <button class="btn" id="btnAplicar">Aplicar (XLSX → JSON)</button>
+        <button class="btn-ghost" id="btnDownload">Baixar planilha.json</button>
+        <div class="pill muted" id="status">Aguardando dados… Use ?update={json} ou cole no campo.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mapa de colunas -->
+  <section class="card">
+    <h3 style="margin:0 0 6px">Mapa de colunas (XLSX → Funcionários)</h3>
+    <div class="grid">
+      <div>
+        <label>Coluna matrícula</label>
+        <input type="text" id="mapMatricula" value="Matricula"/>
+      </div>
+      <div>
+        <label>Coluna nome</label>
+        <input type="text" id="mapNome" value="Nome"/>
+      </div>
+      <div>
+        <label>Coluna setor</label>
+        <input type="text" id="mapSetor" value="Setor"/>
+      </div>
+      <div>
+        <label>Coluna ativo (opcional)</label>
+        <input type="text" id="mapAtivo" value="Ativo"/>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:6px">Se sua planilha usar cabeçalhos diferentes, ajuste aqui e clique em <b>Aplicar</b>.</div>
+  </section>
+
+  <!-- Relatório de Validação -->
+  <section class="card">
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <h3 style="margin:0">Validação & Relatório</h3>
+      <div class="kpi">
+        <div id="kpiTotal" class="muted">Total XLSX: 0</div>
+        <div id="kpiValidos" class="ok">Válidos: 0</div>
+        <div id="kpiAtualizados" class="ok">Atualizados: 0</div>
+        <div id="kpiInseridos" class="ok">Inseridos: 0</div>
+        <div id="kpiIgnorados" class="warn">Ignorados: 0</div>
+        <div id="kpiErros" class="err">Erros: 0</div>
+        <div id="kpiDup" class="warn">Duplicados no XLSX: 0</div>
+      </div>
+    </div>
+    <details open style="margin-top:8px">
+      <summary><b>Erros e avisos</b></summary>
+      <pre id="logErros" class="muted">Nenhum processamento ainda.</pre>
+    </details>
+  </section>
+</main>
+
+<script>
+let DB = null;                // objeto atual do JSON
+let XLSRows = null;           // linhas lidas da aba 1 (objetos por cabeçalho)
+let XLSHeaders = [];          // cabeçalhos da primeira linha
+
+const qs = s => document.querySelector(s);
+const fmt = (o)=> JSON.stringify(o,null,2);
+function setStatus(msg, cls){ const el=qs('#status'); el.textContent=msg; el.className = 'pill ' + (cls||''); }
+function render(){ qs('#preview').textContent = DB? fmt(DB): '{\n  // Cole aqui seus dados ou use ?update={...}\n}'; }
+
+// Utilidades
+function truthyBool(x){
+  if(x===undefined || x===null) return undefined;
+  const s = String(x).trim().toLowerCase();
+  if(s==='') return undefined;
+  return /^(1|true|sim|ativo|yes)$/i.test(s);
+}
+
+// 1) Carregar via ?update=
+(function initFromQuery(){
+  const u = new URL(location.href);
+  const raw = u.searchParams.get('update');
+  if(!raw) return;
+  try{ DB = JSON.parse(raw); setStatus('JSON recebido pela query (?update=...)', 'ok'); }
+  catch(e){ setStatus('Falha ao parsear ?update=...: '+(e?.message||e),'err'); }
+  render();
+})();
+
+// 2) Área de texto manual
+qs('#txtJson').addEventListener('input', e=>{
+  const val = e.target.value.trim(); if(!val){ DB=null; render(); return; }
+  try{ DB = JSON.parse(val); setStatus('JSON carregado do campo de texto.','ok'); }
+  catch{ setStatus('JSON inválido no campo de texto.','err'); }
+  render();
+});
+
+// 3) Ler XLSX de Funcionários
+qs('#inpXLS').addEventListener('change', async (ev)=>{
+  const f = ev.target.files?.[0];
+  if(!f){ XLSRows=null; XLSHeaders=[]; qs('#xlsInfo').textContent='Nenhum arquivo carregado.'; return; }
+  const buf = await f.arrayBuffer();
+  const wb = XLSX.read(buf, { type:'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]]; // primeira aba
+  // headers (linha 1)
+  const headerArr = XLSX.utils.sheet_to_json(ws, {header:1, blankrows:false});
+  XLSHeaders = Array.isArray(headerArr[0]) ? headerArr[0].map(h=> String(h||'').trim()) : [];
+  // dados com cabeçalho
+  XLSRows = XLSX.utils.sheet_to_json(ws, {defval:''});
+  qs('#xlsInfo').textContent = `${XLSRows.length} linha(s) lidas da planilha: ${f.name}`;
+});
+
+// 4) Aplicar (XLSX → JSON) com validação e mescla
+qs('#btnAplicar').addEventListener('click', ()=>{
+  if(!DB){ setStatus('Carregue primeiro um JSON base (via ?update=... ou campo de texto).','warn'); return; }
+  if(!Array.isArray(DB.setores)) DB.setores = [];
+  if(typeof DB.objetos !== 'object') DB.objetos = {};
+  if(!Array.isArray(DB.funcionarios)) DB.funcionarios = [];
+  if(!Array.isArray(DB.logs)) DB.logs = [];
+
+  if(!XLSRows || !XLSRows.length){ setStatus('Nenhum XLSX carregado. Se deseja apenas baixar o JSON base, use "Baixar".','warn'); render(); return; }
+
+  const map = {
+    mat: qs('#mapMatricula').value.trim() || 'Matricula',
+    nome: qs('#mapNome').value.trim() || 'Nome',
+    setor: qs('#mapSetor').value.trim() || 'Setor',
+    ativo: qs('#mapAtivo').value.trim() || 'Ativo'
+  };
+
+  // Validação de colunas obrigatórias
+  const obrig = [map.mat, map.nome, map.setor];
+  const faltantes = obrig.filter(col => !XLSHeaders.includes(col));
+  const logs = [];
+  if(faltantes.length){
+    logs.push(`ERRO: Cabeçalhos obrigatórios ausentes: ${faltantes.join(', ')}`);
+    qs('#logErros').textContent = logs.join('\n');
+    setStatus('Falha na validação de cabeçalhos.', 'err');
+    // KPIs
+    setKpi({ total:XLSRows.length, validos:0, atualizados:0, inseridos:0, ignorados:0, erros:1, dup:0 });
+    return;
+  }
+
+  // Varredura linha a linha
+  let total = XLSRows.length, validos=0, inseridos=0, atualizados=0, ignorados=0, erros=0, dup=0;
+  const seen = new Set();
+  const modo = qs('#selModo').value; // 'merge' | 'replace'
+  const manterAtivoVazio = qs('#chkManterAtivoVazio').checked;
+
+  // Mapa atual por matrícula
+  const mapaExist = new Map((DB.funcionarios||[]).map(f => [String(f.matricula||'').trim(), f]));
+
+  // Coletor para modo replace
+  const novosReplace = [];
+
+  XLSRows.forEach((r, idx)=>{
+    const linha = idx + 2; // +2 por causa do cabeçalho na linha 1
+    const matricula = String(r[map.mat] ?? '').trim();
+    const nome = String(r[map.nome] ?? '').trim();
+    const setor = String(r[map.setor] ?? '').trim();
+    const ativoRaw = r.hasOwnProperty(map.ativo) ? r[map.ativo] : '';
+    const ativoVal = truthyBool(ativoRaw); // undefined quando vazio
+
+    // Erros de conteúdo
+    if(!matricula){ erros++; logs.push(`ERRO L${linha}: Matrícula vazia.`); return; }
+    if(!nome){ erros++; logs.push(`ERRO L${linha}: Nome vazio (matrícula ${matricula}).`); return; }
+
+    // Duplicidade dentro do XLSX
+    if(seen.has(matricula)) { dup++; logs.push(`AVISO L${linha}: Matrícula duplicada no XLSX (${matricula}). Ignorada.`); ignorados++; return; }
+    seen.add(matricula);
+
+    const item = { matricula, nome, setor };
+    if(ativoVal !== undefined) item.ativo = !!ativoVal;
+
+    if(modo === 'replace'){
+      // Apenas acumula para substituir tudo no final
+      novosReplace.push(item); validos++;
+    } else {
+      // MESCLA: atualiza/insere
+      const atual = mapaExist.get(matricula);
+      if(atual){
+        atual.nome = nome;
+        atual.setor = setor;
+        if(ativoVal !== undefined) {
+          atual.ativo = !!ativoVal;
+        } else if(!manterAtivoVazio) {
+          // Se não manter e célula vazia, zera o campo
+          delete atual.ativo;
+        }
+        atualizados++; validos++;
+      } else {
+        // Inserção
+        if(ativoVal === undefined && manterAtivoVazio===false){ /* nada */ }
+        DB.funcionarios.push(item);
+        inseridos++; validos++;
+      }
+    }
+  });
+
+  if(modo === 'replace'){
+    DB.funcionarios = novosReplace; // substituição total
+  }
+
+  // KPIs e logs
+  setKpi({ total, validos, atualizados, inseridos, ignorados, erros, dup });
+  if(!logs.length) logs.push('Sem erros. Processo concluído.');
+  qs('#logErros').textContent = logs.join('\n');
+
+  setStatus(modo==='merge' ? `Mescla concluída: ${validos} válidos, ${atualizados} atualizados, ${inseridos} inseridos, ${ignorados} ignorados, ${erros} erros.`
+                            : `Substituição concluída: ${validos} válidos.`, 'ok');
+  render();
+});
+
+function setKpi({total,validos,atualizados,inseridos,ignorados,erros,dup}){
+  qs('#kpiTotal').textContent = `Total XLSX: ${total}`;
+  qs('#kpiValidos').textContent = `Válidos: ${validos}`;
+  qs('#kpiAtualizados').textContent = `Atualizados: ${atualizados}`;
+  qs('#kpiInseridos').textContent = `Inseridos: ${inseridos}`;
+  qs('#kpiIgnorados').textContent = `Ignorados: ${ignorados}`;
+  qs('#kpiErros').textContent = `Erros: ${erros}`;
+  qs('#kpiDup').textContent = `Duplicados no XLSX: ${dup}`;
+}
+
+// 5) Baixar JSON
+qs('#btnDownload').addEventListener('click', ()=>{
+  if(!DB){ alert('Nada para baixar: carregue ou gere o JSON.'); return; }
+  const text = JSON.stringify(DB, null, 2);
+  const blob = new Blob([text], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'planilha.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 2500);
+});
+</script>
+</body>
+</html>
