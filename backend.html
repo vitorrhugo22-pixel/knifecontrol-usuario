@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>KnifeControl – Backend (Atualizador da planilha.json)</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#ffffff; --fg:#16181b; --card:#f6f7f9;
+      --pri:#2f6fed; --ok:#2fbf71; --err:#e55353; --muted:#6b7280;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#0b0d10; --fg:#e5e7eb; --card:#12161a;
+        --pri:#6ea8ff; --ok:#34d399; --err:#ef4444; --muted:#9ca3af;
+      }
+    }
+    body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+           font:14px/1.4 system-ui,Segoe UI,Roboto,Arial,sans-serif; }
+    header { padding:16px 20px; border-bottom:1px solid #0001;
+             display:flex; align-items:center; gap:12px; }
+    .dot { width:10px; height:10px; border-radius:50%; background:var(--pri); }
+    h1 { margin:0; font-size:18px; }
+    main { max-width:960px; margin:20px auto; padding:0 16px; }
+    .card { background:var(--card); border:1px solid #0002; border-radius:12px; padding:16px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    a.btn, button { background:var(--pri); color:#fff; border:none; border-radius:10px;
+                    padding:10px 14px; font-weight:600; cursor:pointer; text-decoration:none;
+                    display:inline-flex; gap:8px; align-items:center; }
+    a.ok { background:var(--ok); }
+    a.err { background:var(--err); }
+    pre { background:#00000010; border:1px solid #0001; border-radius:10px;
+          padding:12px; overflow:auto; max-height:360px; }
+    .muted { color:var(--muted); }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <h1>KnifeControl – Backend (Atualizador da planilha.json)</h1>
+</header>
+
+<main>
+  <section class="card">
+    <div id="status" class="muted">Processando…</div>
+
+    <div id="actions" class="row hidden" style="margin-top:12px;">
+      <a id="downloadBtn" class="btn ok" download="planilha.json">⬇ Baixar planilha.json atualizado</a>
+      <a href="controle.html" class="btn">↩ Voltar ao controle</a>
+    </div>
+
+    <h3 style="margin:18px 0 8px;">Pré-visualização</h3>
+    <pre id="preview">{}</pre>
+
+    <p class="muted" id="hint">
+      Dica: este backend está em modo estático.
+      Para aplicar no servidor, substitua o arquivo <b>planilha.json</b> pelo arquivo baixado.<br>
+      URL de uso:<br>
+      <code>backend.html?update={...json...}</code>
+    </p>
+  </section>
+</main>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const update = qs.get("update");
+
+  const statusEl   = document.getElementById("status");
+  const actionsEl  = document.getElementById("actions");
+  const previewEl  = document.getElementById("preview");
+  const downloadBtn= document.getElementById("downloadBtn");
+
+  // #1 controle de ObjectURL para evitar "leaks"
+  let lastObjectUrl = null;
+
+  // Quando não recebeu ?update=
+  if(!update){
+    statusEl.textContent =
+      "Aguardando dados… Use ?update=<json> para enviar o conteúdo completo do planilha.json.";
+    actionsEl.classList.add("hidden");
+    previewEl.textContent = "{\n  // Cole aqui seus dados para visualizar…\n}";
+    return;
+  }
+
+  try {
+    // Converte o JSON enviado (controle.html usa encodeURIComponent)
+    let incoming = JSON.parse(decodeURIComponent(update));
+
+    // Garante presença do bloco "logs" como array
+    if (!('logs' in incoming) || !Array.isArray(incoming.logs)) {
+      incoming.logs = [];
+    }
+
+    // Ordena chaves (estética/consistência)
+    const ordered = orderKeys(incoming);
+    const text = JSON.stringify(ordered, null, 2);
+
+    // Exibe
+    previewEl.textContent = text;
+
+    // Revoga o URL anterior e cria um novo (boa prática)  [Item #1]
+    if (lastObjectUrl) URL.revokeObjectURL(lastObjectUrl);
+    const blob = new Blob([text], {type:"application/json"});
+    lastObjectUrl = URL.createObjectURL(blob);
+    downloadBtn.href = lastObjectUrl;
+
+    // Status OK
+    statusEl.textContent = "✅ JSON validado e pronto. Baixe e substitua o arquivo planilha.json no servidor.";
+    actionsEl.classList.remove("hidden");
+
+    // Revoga o URL quando sair da página  [Item #1]
+    window.addEventListener('beforeunload', () => {
+      if (lastObjectUrl) URL.revokeObjectURL(lastObjectUrl);
+    });
+
+  } catch(e){
+    // Mensagem de erro com textContent para evitar HTML acidental  [Item #2]
+    statusEl.textContent = "❌ Erro ao processar o parâmetro ?update=: " + (e && e.message ? e.message : e);
+    actionsEl.classList.add("hidden");
+    previewEl.textContent = update;
+  }
+
+  // Ordena chaves recursivamente
+  function orderKeys(obj){
+    if (Array.isArray(obj)) return obj.map(orderKeys);
+    if (obj && typeof obj === "object"){
+      const out = {};
+      Object.keys(obj).sort().forEach(k => { out[k] = orderKeys(obj[k]); });
+      return out;
+    }
+    return obj;
+  }
+})();
+</script>
+</body>
+</html>
